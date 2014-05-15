@@ -68,7 +68,8 @@ COPY "$(TargetPath)" "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\lua\bi
     </Link>
     <PostBuildEvent>
       <Command>COPY "$(TargetPath)" "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmsv_bromsock_win32.dll"
-COPY "$(TargetPath)" "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmcl_bromsock_win32.dll"</Command>
+COPY "$(TargetPath)" "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmcl_bromsock_win32.dll"
+COPY "$(TargetPath)" "$(TargetDir)../../Builds/gmsv_bromsock_win32.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
