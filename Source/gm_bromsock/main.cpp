@@ -661,9 +661,9 @@ GMOD_FUNCTION(SOCK__TOSTRING){
 	char* ipstr = inet_ntoa(s->Sock->addr.sin_addr);
 	char buff[256];
 #ifdef _MSC_VER
-	sprintf_s(buff, "bromsock{%s:%d}", ipstr, s->Sock->addr.sin_port);
+	sprintf_s(buff, "bromsock{%s:%d}", ipstr, ntohs(s->Sock->addr.sin_port));
 #else
-	sprintf(buff, "bromsock{%s:%d}", ipstr, s->Sock->addr.sin_port);
+	sprintf(buff, "bromsock{%s:%d}", ipstr, ntohs(s->Sock->addr.sin_port));
 #endif
 
 	LUA->PushString(buff);
