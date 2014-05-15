@@ -10,6 +10,7 @@
 namespace BromScript{
 	class Packet{
 	public:
+		int RefCount;
 		bool Valid;
 		EzSock* Sock;
 		unsigned int OutPos;

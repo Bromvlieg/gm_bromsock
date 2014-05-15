@@ -10,6 +10,7 @@ namespace BromScript{
 		this->Valid = false;
 
 		this->Sock = null;
+		this->RefCount = 0;
 		this->InPos = 0;
 		this->InSize = 0;
 
@@ -21,7 +22,8 @@ namespace BromScript{
 
 	Packet::Packet(EzSock* sock){
 		this->Valid = true;
-
+		
+		this->RefCount = 0;
 		this->Sock = sock;
 		this->InPos = 0;
 		this->InSize = 0;

@@ -1,7 +1,6 @@
 #include "LockObject.h"
 
-LockObject::LockObject(void) {
-	this->CurrentLocks = 0;
+LockObject::LockObject(void):CurrentLocks(0) {
 #ifdef _MSC_VER
 	InitializeCriticalSectionAndSpinCount(&this->LockHandle, 0x00000400);
 #else
@@ -18,6 +17,7 @@ LockObject::~LockObject(void){
 }
 
 void LockObject::Lock(){
+
 #ifdef _MSC_VER
 	EnterCriticalSection(&this->LockHandle);
 #else
