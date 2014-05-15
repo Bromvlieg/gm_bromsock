@@ -740,8 +740,6 @@ GMOD_FUNCTION(PACK__GC){
 
 	p->RefCount--;
 	if (p->RefCount == 0){
-		
-		LUA->ReferenceFree(PacketRef);
 		// Don't delete it. Just clear it.
 		// goto SOCK__GC to read why.
 
@@ -882,9 +880,7 @@ GMOD_MODULE_CLOSE(){
 	}
 
 	for (Packet* p : AllocatedPackets){
-		// we already unref'd them at the __gc, only need to delete them now.
-		// LUA->ReferenceFree(PacketRef);
-
+		LUA->ReferenceFree(PacketRef);
 		delete p;
 	}
 	
