@@ -36,6 +36,8 @@ namespace BromScript{
 		void WriteFloat(float);
 		void WriteDouble(double);
 		void WriteString(const char*);
+		void WriteStringNT(const char*);
+		void WriteLine(const char*);
 
 		unsigned char ReadByte();
 		bool ReadBool();
@@ -46,8 +48,10 @@ namespace BromScript{
 		float ReadFloat();
 		double ReadDouble();
 		char* ReadString();
-
-		bool CanRead(int);
+		char* ReadLine();
+		
+		bool CanRead(int len);
+		bool CanRead(char* seq);
 		bool HasDataLeft();
 		int DataLeft();
 

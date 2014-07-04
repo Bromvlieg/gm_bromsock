@@ -170,6 +170,27 @@ namespace BromScript{
 		return buff;
 	}
 
+	char* Packet::ReadLine(){
+		int startpos = this->InPos;
+
+		while(this->CanRead(1)){
+			if (this->InPos > 0 && this->InBuffer[this->InPos - 1] == '\r' && this->InBuffer[this->InPos] == '\n'){
+				this->InPos++;
+				break;
+			}
+
+			this->InPos++;
+		}
+
+		if (startpos == this->InPos) return "";
+
+		char* buff = new char[this->InPos - startpos];
+		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
+		buff[this->InPos - startpos] = 0;
+
+		return buff;
+	}
+
 	int Packet::DataLeft(){
 		return this->InSize - this->InPos;
 	}
@@ -184,14 +205,22 @@ namespace BromScript{
 			unsigned char* tmp = new unsigned char[numofbytes];
 			int recamount = 0;
 			while(recamount != numofbytes){
-				recamount += recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0);
+				int currec = recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0);
 
-				if (recamount == -1 || recamount == 0){
+				if (currec == -1 || currec == 0){
+					if (recamount > 0){
+						// even trough we didn't receive everything we wanted, we DID receive something. Which means it worked? Right?
+						numofbytes = recamount;
+						break;
+					}
+
 					this->Sock->state = EzSock::skERROR;
 					this->Valid = false;
 					delete[] tmp;
 					return false;
 				}
+
+				recamount += currec;
 			}
 
 			this->CheckSpaceIn(numofbytes);
@@ -202,6 +231,56 @@ namespace BromScript{
 		}
 
 		return res;
+	}
+
+	bool Packet::CanRead(char* seq){
+		if (this->Sock == null)
+			return false;
+
+		char* buffer = new char[4096];
+		int curoffset = 0;
+		int seqsize = strlen(seq);
+
+		while(true){
+			int currec = recv(this->Sock->sock, buffer + curoffset, 1, 0);
+			
+			if (currec == -1 || currec == 0){
+				this->Sock->state = EzSock::skERROR;
+				this->Valid = false;
+				delete[] buffer;
+				return false;
+			}
+
+			curoffset++;
+
+			bool done = true;
+			for (int i = 0; i < seqsize; i++){
+				if (buffer[curoffset - seqsize + i] != seq[i]){
+					done = false;
+					break;
+				}
+			}
+
+			if (done){
+				this->CheckSpaceIn(curoffset);
+				memcpy(this->InBuffer + this->InPos, buffer, curoffset);
+
+				delete[] buffer;
+				return true;
+			}
+
+			// enlarge buffer if neded
+			if (curoffset % 4096 == 0){
+				char* newbuffer = new char[curoffset + 4096];
+				memcpy(newbuffer, buffer, curoffset);
+				
+				delete[] buffer;
+				buffer = newbuffer;
+			}
+		}
+
+		delete[] buffer;
+		return false;
 	}
 
 	void Packet::WriteByte(unsigned char num){
@@ -270,6 +349,27 @@ namespace BromScript{
 
 		for (int i = 0; i < size; i++)
 			this->OutBuffer[this->OutPos++] = str[i];
+	}
+
+	void Packet::WriteStringNT(const char* str){
+		int size = strlen(str);
+		this->CheckSpaceOut(size + 1);
+
+		for (int i = 0; i < size; i++)
+			this->OutBuffer[this->OutPos++] = str[i];
+
+		this->OutBuffer[this->OutPos++] = null;
+	}
+
+	void Packet::WriteLine(const char* str){
+		int size = strlen(str);
+		this->CheckSpaceOut(size + 2);
+
+		for (int i = 0; i < size; i++)
+			this->OutBuffer[this->OutPos++] = str[i];
+		
+		this->OutBuffer[this->OutPos++] = '\r';
+		this->OutBuffer[this->OutPos++] = '\n';
 	}
 
 	void Packet::Send(){
