@@ -704,7 +704,8 @@ GMOD_FUNCTION(SOCK_SetTimeout){
 	int retb = setsockopt(s->Sock->sock, SOL_SOCKET, SO_RCVTIMEO, &dwTime, sizeof(dwTime));
 #endif
 
-	LUA->PushBool(reta != SOCKET_ERROR && retb != SOCKET_ERROR);
+	// Should be SOCKET_ERROR, but linux does not have SOCKET_ERROR defined.
+	LUA->PushBool(reta != -1 && retb != -1);
 	return 1;
 }
 
