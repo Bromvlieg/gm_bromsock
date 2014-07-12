@@ -53,7 +53,7 @@ public:
 	void* data2;
 	void* data3;
 
-	SockEvent::SockEvent():data1(null), data2(null), data3(null), Type(EventType::NONE) {}
+	SockEvent():data1(null), data2(null), data3(null), Type(EventType::NONE) {}
 };
 
 class SockWrapper{
