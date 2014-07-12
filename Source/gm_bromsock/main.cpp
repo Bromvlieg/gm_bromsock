@@ -43,7 +43,7 @@ void* SockWorker(void *obj);
 #endif
 
 enum class EventType {
-	Connect, Send, Receive, Accept
+	NONE, Connect, Send, Receive, Accept
 };
 
 class SockEvent{
@@ -52,6 +52,8 @@ public:
 	void* data1;
 	void* data2;
 	void* data3;
+
+	SockEvent::SockEvent():data1(null), data2(null), data3(null), Type(EventType::NONE) {}
 };
 
 class SockWrapper{
