@@ -907,7 +907,7 @@ GMOD_MODULE_OPEN(){
 
 	LUA->CreateTable();
 		ADDFUNC("WriteByte", PACK_WRITEByte);
-		ADDFUNC("WriteUByte", PACK_WRITESByte);
+		ADDFUNC("WriteSByte", PACK_WRITESByte);
 		ADDFUNC("WriteShort", PACK_WRITEShort);
 		ADDFUNC("WriteFloat", PACK_WRITEFloat);
 		ADDFUNC("WriteInt", PACK_WRITEInt);
@@ -921,7 +921,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("WriteStringRaw", PACK_WRITEStringRaw);
 		ADDFUNC("WriteLine", PACK_WRITELine);
 		ADDFUNC("ReadByte", PACK_READByte);
-		ADDFUNC("ReadUByte", PACK_READSByte);
+		ADDFUNC("ReadSByte", PACK_READSByte);
 		ADDFUNC("ReadShort", PACK_READShort);
 		ADDFUNC("ReadFloat", PACK_READFloat);
 		ADDFUNC("ReadInt", PACK_READInt);
