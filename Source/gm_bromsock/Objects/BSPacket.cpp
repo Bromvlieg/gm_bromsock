@@ -257,7 +257,7 @@ namespace BromScript{
 
 		if (startpos == this->InPos) return "";
 
-		char* buff = new char[this->InPos - startpos];
+		char* buff = new char[this->InPos - startpos + 1];
 		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
 		buff[this->InPos - startpos] = 0;
 
