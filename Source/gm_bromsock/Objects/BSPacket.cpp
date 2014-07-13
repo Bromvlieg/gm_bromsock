@@ -116,6 +116,16 @@ namespace BromScript{
 		return ret;
 	}
 
+	unsigned short Packet::ReadUShort(){
+		if (!this->CanRead(2)) return 0;
+
+		unsigned short ret = 0;
+		memcpy(&ret, this->InBuffer + this->InPos, 2);
+		this->InPos += 2;
+
+		return ret;
+	}
+
 	float Packet::ReadFloat(){
 		if (!this->CanRead(4)) return 0;
 
@@ -146,10 +156,30 @@ namespace BromScript{
 		return ret;
 	}
 
+	unsigned int Packet::ReadUInt(){
+		if (!this->CanRead(4)) return 0;
+
+		unsigned int ret = 0;
+		memcpy(&ret, this->InBuffer + this->InPos, 4);
+		this->InPos += 4;
+
+		return ret;
+	}
+
 	long long Packet::ReadLong(){
 		if (!this->CanRead(8)) return 0;
 
 		long long ret = 0;
+		memcpy(&ret, this->InBuffer + this->InPos, 8);
+		this->InPos += 8;
+
+		return ret;
+	}
+
+	unsigned long long Packet::ReadULong(){
+		if (!this->CanRead(8)) return 0;
+
+		unsigned long long ret = 0;
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
@@ -354,14 +384,10 @@ namespace BromScript{
 		this->OutPos += 2;
 	}
 
-	void Packet::WriteUShorts(unsigned short* arr, int size, bool sendsize){
-		size *= 2;
-
-		this->CheckSpaceOut(size + sendsize);
-
-		if (sendsize) this->WriteInt(size);
-		memcpy(this->OutBuffer + this->OutPos, arr, size);
-		this->OutPos += size;
+	void Packet::WriteUShort(unsigned short num){
+		this->CheckSpaceOut(2);
+		memcpy(this->OutBuffer + this->OutPos, &num, 2);
+		this->OutPos += 2;
 	}
 
 	void Packet::WriteInt(int num){
@@ -370,7 +396,19 @@ namespace BromScript{
 		this->OutPos += 4;
 	}
 
+	void Packet::WriteUInt(unsigned int num){
+		this->CheckSpaceOut(4);
+		memcpy(this->OutBuffer + this->OutPos, &num, 4);
+		this->OutPos += 4;
+	}
+
 	void Packet::WriteLong(long long num){
+		this->CheckSpaceOut(8);
+		memcpy(this->OutBuffer + this->OutPos, &num, 8);
+		this->OutPos += 8;
+	}
+
+	void Packet::WriteULong(unsigned long long num){
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
 		this->OutPos += 8;

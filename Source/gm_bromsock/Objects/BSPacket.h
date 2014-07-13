@@ -30,9 +30,11 @@ namespace BromScript{
 		void WriteBool(bool);
 		void WriteBytes(unsigned char* arr, int size, bool sendsize);
 		void WriteShort(short);
-		void WriteUShorts(unsigned short* arr, int size, bool sendsize);
+		void WriteUShort(unsigned short);
 		void WriteInt(int);
+		void WriteUInt(unsigned int);
 		void WriteLong(long long);
+		void WriteULong(unsigned long long);
 		void WriteFloat(float);
 		void WriteDouble(double);
 		void WriteString(const char*);
@@ -43,8 +45,11 @@ namespace BromScript{
 		bool ReadBool();
 		unsigned char* ReadBytes(int len);
 		short ReadShort();
+		unsigned short ReadUShort();
 		int ReadInt();
+		unsigned int ReadUInt();
 		long long ReadLong();
+		unsigned long long ReadULong();
 		float ReadFloat();
 		double ReadDouble();
 		char* ReadString(int len = -1);
