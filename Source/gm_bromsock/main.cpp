@@ -19,12 +19,12 @@ using namespace BromScript;
 #define GETSOCK(num) (SockWrapper*)((GarrysMod::Lua::UserData*)LUA->GetUserdata(num))->data
 #define GETPACK(num) (Packet*)((GarrysMod::Lua::UserData*)LUA->GetUserdata(num))->data
 #define ADDFUNC(fn, f) LUA->PushCFunction(f); LUA->SetField(-2, fn);
-#define CALLLUAFUNC(args) LUA->Call(args, 0); LUA->Pop();
+#define CALLLUAFUNC(args) LUA->Call(args, 0);
 #define UD_TYPE_SOCKET 122
 #define UD_TYPE_PACKET 123
 
 #ifdef _DEBUG
-#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 ); LUA->Pop();
+#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 );
 #else
 #define DEBUGPRINTFUNC
 #endif
@@ -34,7 +34,6 @@ static int SocketRef = 0;
 
 class SockWrapper;
 static std::vector<SockWrapper*> AllocatedSockets;
-static std::vector<Packet*> AllocatedPackets;
 
 #ifdef _MSC_VER
 DWORD WINAPI SockWorker(void* obj);
@@ -313,7 +312,6 @@ GMOD_FUNCTION(CreatePacket){
 
 	if (LUA->IsType(1, UD_TYPE_SOCKET)) p = new Packet((GETSOCK(1))->Sock);
 	else p = new Packet();
-	AllocatedPackets.push_back(p);
 
 	GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
 	ud->data = p;
@@ -398,13 +396,10 @@ GMOD_FUNCTION(ThinkHook){
 				int* size = (int*)se->data2;
 				
 				if (*valid){
-					/*
-					// commented out due to the fact that this causes it to crash. I have no idea why, and I can't seem to find it out due I cannot debug it.
 					LUA->ReferencePush(sw->Callback_Send);
 					sw->PushToStack(state);
 					LUA->PushNumber((double)*size);
 					CALLLUAFUNC(2);
-					*/
 				}else{
 					sw->CallDisconnect();
 				}
@@ -417,8 +412,6 @@ GMOD_FUNCTION(ThinkHook){
 				Packet* p = (Packet*)se->data1;
 
 				if (p != null){
-					AllocatedPackets.push_back(p);
-
 					LUA->ReferencePush(sw->Callback_Receive);
 					sw->PushToStack(state);
 
@@ -598,8 +591,6 @@ GMOD_FUNCTION(SOCK_Receive){
 			return 1;
 		}
 		
-		AllocatedPackets.push_back(p);
-
 		GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
 		ud->data = p;
 		ud->type = UD_TYPE_PACKET;
@@ -641,8 +632,6 @@ GMOD_FUNCTION(SOCK_ReceiveUntil){
 			return 1;
 		}
 		
-		AllocatedPackets.push_back(p);
-
 		GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
 		ud->data = p;
 		ud->type = UD_TYPE_PACKET;
@@ -765,12 +754,14 @@ GMOD_FUNCTION(SOCK__GC){
 
 	s->RefCount--;
 	if (s->RefCount == 0){
-		// Normaly you'd want to delete this. However, because lua _CAN_ access the object after the __gc is called, we can't do much about it...
-		// Oh, and because we support callbacks people don't need to store a reference in tables. So deleting it here would cause that to stop working......
-		// We'll clean up at GMOD_MODULE_CLOSE, a socket ain't that much memory anyway. Packet's are the evil due the In and Out buffers.
+		for (unsigned i = 0; i < AllocatedSockets.size(); i++){
+			if (AllocatedSockets[i] == s){
+				AllocatedSockets.erase(AllocatedSockets.begin() + i);
+				break;
+			}
+		}
 
-		//LUA->ReferenceFree(SocketRef);
-		//delete s;
+		delete s;
 	}
 
 	return 0;
@@ -813,11 +804,7 @@ GMOD_FUNCTION(PACK__GC){
 
 	p->RefCount--;
 	if (p->RefCount == 0){
-		// Don't delete it. Just clear it.
-		// goto SOCK__GC to read why.
-
-		//delete p;
-		p->Clear();
+		delete p;
 	}
 
 	return 0;
@@ -944,8 +931,8 @@ GMOD_MODULE_OPEN(){
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->GetField(-1, "hook");
 	LUA->GetField(-1, "Add");
-	LUA->PushString("Think");
-	LUA->PushString("BS::THINK");
+	LUA->PushString("Tick");
+	LUA->PushString("BS::TICK");
 	LUA->PushCFunction(ThinkHook);
 	LUA->Call(3, 0);
 	LUA->Pop();
@@ -960,18 +947,11 @@ GMOD_MODULE_OPEN(){
 GMOD_MODULE_CLOSE(){
 	DEBUGPRINTFUNC;
 
-	for (SockWrapper* sw : AllocatedSockets){
-		LUA->ReferenceFree(SocketRef);
-		delete sw;
-	}
-
-	for (Packet* p : AllocatedPackets){
-		LUA->ReferenceFree(PacketRef);
-		delete p;
-	}
-	
+	// reset to original state. Just to be sure.
 	AllocatedSockets.clear();
-	AllocatedPackets.clear();
+
+	LUA->ReferenceFree(SocketRef);
+	LUA->ReferenceFree(PacketRef);
 
 	return 0;
 }
