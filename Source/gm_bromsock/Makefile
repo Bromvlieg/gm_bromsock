@@ -15,7 +15,7 @@ obj/%.o : %.cpp
 
 .PHONY: clean
 clean:
-	rm -f obj/*.o gmsv_bromsock_linux.so
+	rm -f obj/*.o obj/Objects/*.o gmsv_bromsock_linux.so
 
 install:
 	cp gmsv_bromsock_linux.so ~/.steam/steam/SteamApps/common/GarrysMod/garrysmod/lua/bin/gmsv_bromsock_linux.dll
