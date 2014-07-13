@@ -843,6 +843,7 @@ GMOD_FUNCTION(PACK_READString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET
 GMOD_FUNCTION(PACK_READStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringNT()); return 1; }
 GMOD_FUNCTION(PACK_READStringAll){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringAll()); return 1; }
 GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil("\r\n")); return 1; }
+GMOD_FUNCTION(PACK_READUntil){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
 
 GMOD_FUNCTION(PACK_InSize){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InSize); return 1; }
 GMOD_FUNCTION(PACK_InPos){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InPos); return 1; }
@@ -901,6 +902,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("ReadStringNT", PACK_READStringNT);
 		ADDFUNC("ReadStringAll", PACK_READStringAll);
 		ADDFUNC("ReadLine", PACK_READLine);
+		ADDFUNC("ReadUntil", PACK_READUntil);
 		ADDFUNC("InSize", PACK_InSize);
 		ADDFUNC("InPos", PACK_InPos);
 		ADDFUNC("OutSize", PACK_OutSize);
