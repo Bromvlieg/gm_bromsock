@@ -446,6 +446,14 @@ namespace BromScript{
 		this->OutBuffer[this->OutPos++] = null;
 	}
 
+	void Packet::WriteStringRaw(const char* str){
+		int size = strlen(str);
+		this->CheckSpaceOut(size);
+
+		for (int i = 0; i < size; i++)
+			this->OutBuffer[this->OutPos++] = str[i];
+	}
+
 	void Packet::WriteLine(const char* str){
 		int size = strlen(str);
 		this->CheckSpaceOut(size + 2);

@@ -39,6 +39,7 @@ namespace BromScript{
 		void WriteDouble(double);
 		void WriteString(const char*);
 		void WriteStringNT(const char*);
+		void WriteStringRaw(const char*);
 		void WriteLine(const char*);
 
 		unsigned char ReadByte();

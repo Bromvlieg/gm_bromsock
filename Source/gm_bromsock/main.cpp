@@ -821,6 +821,7 @@ GMOD_FUNCTION(PACK_WRITELong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET)
 GMOD_FUNCTION(PACK_WRITEULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteULong((unsigned long long)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITEString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteString(LUA->GetString(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITEStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEStringRaw){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteStringRaw(LUA->GetString(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITELine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteLine(LUA->GetString(2)); return 0; }
 
 GMOD_FUNCTION(PACK_READByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadByte()); return 1; }
@@ -887,6 +888,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("WriteULong", PACK_WRITEULong);
 		ADDFUNC("WriteString", PACK_WRITEString);
 		ADDFUNC("WriteStringNT", PACK_WRITEStringNT);
+		ADDFUNC("WriteStringRaw", PACK_WRITEStringRaw);
 		ADDFUNC("WriteLine", PACK_WRITELine);
 		ADDFUNC("ReadByte", PACK_READByte);
 		ADDFUNC("ReadShort", PACK_READShort);
