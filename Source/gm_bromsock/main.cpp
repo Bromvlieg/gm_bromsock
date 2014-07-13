@@ -23,11 +23,11 @@ using namespace BromScript;
 #define UD_TYPE_SOCKET 122
 #define UD_TYPE_PACKET 123
 
-//#ifdef _DEBUG
-//#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 ); LUA->Pop();
-//#else
+#ifdef _DEBUG
+#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 ); LUA->Pop();
+#else
 #define DEBUGPRINTFUNC
-//#endif
+#endif
 
 static int PacketRef = 0;
 static int SocketRef = 0;
