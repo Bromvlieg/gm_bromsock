@@ -23,11 +23,11 @@ using namespace BromScript;
 #define UD_TYPE_SOCKET 122
 #define UD_TYPE_PACKET 123
 
-#ifdef _DEBUG
-#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 ); LUA->Pop();
-#else
+//#ifdef _DEBUG
+//#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 ); LUA->Pop();
+//#else
 #define DEBUGPRINTFUNC
-#endif
+//#endif
 
 static int PacketRef = 0;
 static int SocketRef = 0;
@@ -76,19 +76,8 @@ public:
 	LockObject Mutex;
 	
 	SockWrapper(lua_State* ls):Callback_Accept(-1),Callback_Receive(-1),Callback_Connect(-1),Callback_Send(-1),Callback_Disconnect(-1),CurrentWorkers(0),RefCount(0),DestoryWorkers(false),DidDisconnectCallback(false){
-
 		this->Sock = new EzSock();
 		this->state = ls;
-		
-		// 2 threads, send and receive at the same time, SHOULD be possible.
-#ifdef _MSC_VER
-		CreateThread(null, null, SockWorker, this, null, null);
-		CreateThread(null, null, SockWorker, this, null, null);
-#else
-		pthread_t uselessshit;
-		pthread_create(&uselessshit, NULL, &SockWorker, this);
-		pthread_create(&uselessshit, NULL, &SockWorker, this);
-#endif
 	}
 
 	void PushToStack(lua_State* state){
@@ -104,6 +93,17 @@ public:
 		this->RefCount++;
 	}
 
+	void CreateWorkers(){
+		#ifdef _MSC_VER
+				CreateThread(null, null, SockWorker, this, null, null);
+				CreateThread(null, null, SockWorker, this, null, null);
+		#else
+				pthread_t uselessshit;
+				pthread_create(&uselessshit, NULL, &SockWorker, this);
+				pthread_create(&uselessshit, NULL, &SockWorker, this);
+		#endif
+	}
+
 	void Reset(){
 		DEBUGPRINTFUNC;
 
@@ -114,16 +114,6 @@ public:
 
 		delete this->Sock;
 		this->Sock = new EzSock();
-
-		this->DestoryWorkers = false;
-#ifdef _MSC_VER
-		CreateThread(null, null, SockWorker, this, null, null);
-		CreateThread(null, null, SockWorker, this, null, null);
-#else
-		pthread_t uselessshit;
-		pthread_create(&uselessshit, NULL, &SockWorker, this);
-		pthread_create(&uselessshit, NULL, &SockWorker, this);
-#endif
 	}
 
 	void CallDisconnect(){
@@ -156,6 +146,8 @@ public:
 			isdone = this->CurrentWorkers == 0;
 			this->Mutex.Unlock();
 		}
+
+		this->DestoryWorkers = false;
 	}
 
 	~SockWrapper(){
@@ -388,6 +380,8 @@ GMOD_FUNCTION(ThinkHook){
 				SockWrapper* nsw = (SockWrapper*)se->data1;
 
 				if (nsw != null){
+					nsw->CreateWorkers();
+
 					AllocatedSockets.push_back(nsw);
 
 					LUA->ReferencePush(sw->Callback_Accept);
@@ -458,6 +452,7 @@ GMOD_FUNCTION(SOCK_Connect){
 
 	SockWrapper* s = GETSOCK(1);
 	s->Sock->create();
+	s->CreateWorkers();
 
 	if (s->Callback_Connect > -1){
 		const char* luaip = LUA->GetString(2);
@@ -485,12 +480,14 @@ GMOD_FUNCTION(SOCK_Listen){
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
 	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+	
+	SockWrapper* s = GETSOCK(1);
+	s->Sock->create();
 
-	EzSock* s = (GETSOCK(1))->Sock;
-	s->create();
+	bool ret = s->Sock->bind((unsigned short)LUA->GetNumber(2)) && s->Sock->listen();
+	if (ret) s->CreateWorkers();
 
-	LUA->PushBool(s->bind((unsigned short)LUA->GetNumber(2)) && s->listen());
-
+	LUA->PushBool(ret);
 	return 1;
 }
 
@@ -533,7 +530,7 @@ GMOD_FUNCTION(SOCK_Send){
 		se->data2 = new bool(sendsize);
 		se->data3 = new int(p->OutPos);
 
-		// set the outbuffer to null to prevent the send callback from causing a segfault if the Lua garbage collector is quicker than the callback.
+		// reset the packet
 		p->OutBuffer = null; 
 		p->OutPos = 0;
 		p->OutSize = 0;
@@ -573,6 +570,10 @@ GMOD_FUNCTION(SOCK_Receive){
 	DEBUGPRINTFUNC;
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
+	if (!LUA->IsType(2, GarrysMod::Lua::Type::NIL)){
+		LUA->CheckNumber(2);
+	}
+
 	int toread = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1;
 	
 	SockWrapper* s = GETSOCK(1);
@@ -618,12 +619,12 @@ GMOD_FUNCTION(SOCK_ReceiveUntil){
 	
 	SockWrapper* s = GETSOCK(1);
 	const char* luaseq = LUA->GetString(2);
-	
-	int seqlen = strlen(luaseq) + 1;
-	char* seq = new char[seqlen];
-	memcpy(seq, luaseq, seqlen);
 
 	if (s->Callback_Receive > -1){
+		int seqlen = strlen(luaseq) + 1;
+		char* seq = new char[seqlen];
+		memcpy(seq, luaseq, seqlen);
+
 		SockEvent* se = new SockEvent();
 		se->Type = EventType::Receive;
 		se->data2 = seq;
@@ -633,8 +634,23 @@ GMOD_FUNCTION(SOCK_ReceiveUntil){
 		s->Mutex.Unlock();
 		return 0;
 	}else{
-		LUA->ThrowError("When using ReceiveUntil you MUST use Send Callbacks");
-		return 0;
+		Packet* p = new Packet(s->Sock);
+		if (!p->CanRead((char*)luaseq)){
+			delete p;
+			LUA->PushBool(false);
+			return 1;
+		}
+		
+		AllocatedPackets.push_back(p);
+
+		GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
+		ud->data = p;
+		ud->type = UD_TYPE_PACKET;
+
+		LUA->ReferencePush(PacketRef);
+		LUA->SetMetaTable( -2 );
+		p->RefCount++;
+		return 1;
 	}
 }
 
@@ -823,8 +839,10 @@ GMOD_FUNCTION(PACK_READFloat){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET)
 GMOD_FUNCTION(PACK_READInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadInt()); return 1; }
 GMOD_FUNCTION(PACK_READDouble){DEBUGPRINTFUNC;  LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadDouble()); return 1; }
 GMOD_FUNCTION(PACK_READLong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadLong()); return 1; }
-GMOD_FUNCTION(PACK_READString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadString()); return 1; }
-GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadLine()); return 1; }
+GMOD_FUNCTION(PACK_READString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadString(LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1)); return 1; }
+GMOD_FUNCTION(PACK_READStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringNT()); return 1; }
+GMOD_FUNCTION(PACK_READStringAll){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringAll()); return 1; }
+GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil("\r\n")); return 1; }
 
 GMOD_FUNCTION(PACK_InSize){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InSize); return 1; }
 GMOD_FUNCTION(PACK_InPos){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InPos); return 1; }
@@ -836,6 +854,7 @@ GMOD_FUNCTION(PACK_IsValid){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); 
 GMOD_FUNCTION(SOCK_IsValid){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushBool((GETSOCK(1))->Sock->Valid); return 1; }
 GMOD_FUNCTION(SOCK_GetIP){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushString(inet_ntoa((GETSOCK(1))->Sock->addr.sin_addr)); return 1; }
 GMOD_FUNCTION(SOCK_GetPort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber(ntohs((GETSOCK(1))->Sock->addr.sin_port)); return 1; }
+GMOD_FUNCTION(SOCK_GetState){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber((GETSOCK(1))->Sock->state); return 1; }
 
 GMOD_MODULE_OPEN(){
 	DEBUGPRINTFUNC;
@@ -852,6 +871,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("ReceiveUntil", SOCK_ReceiveUntil);
 		ADDFUNC("GetIP", SOCK_GetIP);
 		ADDFUNC("GetPort", SOCK_GetPort);
+		ADDFUNC("GetState", SOCK_GetState);
 		ADDFUNC("AddWorker", SOCK_AddWorker);
 		ADDFUNC("SetTimeout", SOCK_SetTimeout);
 		ADDFUNC("SetCallbackReceive", SOCK_CALLBACKReceive);
@@ -878,6 +898,8 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("ReadDouble", PACK_READDouble);
 		ADDFUNC("ReadLong", PACK_READLong);
 		ADDFUNC("ReadString", PACK_READString);
+		ADDFUNC("ReadStringNT", PACK_READStringNT);
+		ADDFUNC("ReadStringAll", PACK_READStringAll);
 		ADDFUNC("ReadLine", PACK_READLine);
 		ADDFUNC("InSize", PACK_InSize);
 		ADDFUNC("InPos", PACK_InPos);
@@ -920,8 +942,8 @@ GMOD_MODULE_OPEN(){
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->GetField(-1, "hook");
 	LUA->GetField(-1, "Add");
-	LUA->PushString("Tick");
-	LUA->PushString("BS::TICK"); // changed from Think to Tick. Think needs the server to be "Activated" while Tick does not.
+	LUA->PushString("Think");
+	LUA->PushString("BS::THINK");
 	LUA->PushCFunction(ThinkHook);
 	LUA->Call(3, 0);
 	LUA->Pop();

@@ -156,8 +156,8 @@ namespace BromScript{
 		return ret;
 	}
 
-	char* Packet::ReadString(){
-		int len = this->ReadShort();
+	char* Packet::ReadString(int len){
+		if (len == -1) len = this->ReadShort();
 		if (!this->CanRead(len)) return "";
 
 		if (len == 0) return "";
@@ -170,16 +170,59 @@ namespace BromScript{
 		return buff;
 	}
 
-	char* Packet::ReadLine(){
+	char* Packet::ReadStringAll(){
+		int len = this->InSize - this->InPos;
+		if (len == 0) return "";
+
+		char* buff = new char[len + 1];
+		memcpy(buff, this->InBuffer + this->InPos, len);
+		buff[len] = 0;
+
+		this->InPos += len;
+		return buff;
+	}
+
+	char* Packet::ReadStringNT(){
 		int startpos = this->InPos;
 
 		while(this->CanRead(1)){
-			if (this->InPos > 0 && this->InBuffer[this->InPos - 1] == '\r' && this->InBuffer[this->InPos] == '\n'){
-				this->InPos++;
+			this->InPos++;
+
+			if (this->InBuffer[this->InPos] == null){
 				break;
 			}
+		}
 
+		if (startpos == this->InPos) return "";
+
+		char* buff = new char[this->InPos - startpos];
+		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
+		buff[this->InPos - startpos] = 0;
+
+		return buff;
+	}
+
+	char* Packet::ReadUntil(char* seq){
+		unsigned int startpos = this->InPos;
+		unsigned int seqsize = strlen(seq);
+
+		while(this->CanRead(1)){
 			this->InPos++;
+
+			if (this->InPos - startpos >= seqsize){
+				bool done = true;
+
+				for (unsigned int i = 0; i < seqsize; i++){
+					if (this->InBuffer[this->InPos - seqsize + i] != seq[i]){
+						done = false;
+						break;
+					}
+				}
+
+				if (done){
+					break;
+				}
+			}
 		}
 
 		if (startpos == this->InPos) return "";
@@ -253,20 +296,24 @@ namespace BromScript{
 
 			curoffset++;
 
-			bool done = true;
-			for (int i = 0; i < seqsize; i++){
-				if (buffer[curoffset - seqsize + i] != seq[i]){
-					done = false;
-					break;
+			// going into negative index won't really matter, but it's bad practice, so let's do this instead. better safe than sorry right?
+			if (curoffset >= seqsize){
+				bool done = true;
+
+				for (int i = 0; i < seqsize; i++){
+					if (buffer[curoffset - seqsize + i] != seq[i]){
+						done = false;
+						break;
+					}
 				}
-			}
 
-			if (done){
-				this->CheckSpaceIn(curoffset);
-				memcpy(this->InBuffer + this->InPos, buffer, curoffset);
+				if (done){
+					this->CheckSpaceIn(curoffset);
+					memcpy(this->InBuffer + this->InPos, buffer, curoffset);
 
-				delete[] buffer;
-				return true;
+					delete[] buffer;
+					return true;
+				}
 			}
 
 			// enlarge buffer if neded

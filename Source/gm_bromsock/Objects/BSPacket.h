@@ -47,8 +47,10 @@ namespace BromScript{
 		long long ReadLong();
 		float ReadFloat();
 		double ReadDouble();
-		char* ReadString();
-		char* ReadLine();
+		char* ReadString(int len = -1);
+		char* ReadUntil(char* seq);
+		char* ReadStringNT();
+		char* ReadStringAll();
 		
 		bool CanRead(int len);
 		bool CanRead(char* seq);
