@@ -118,6 +118,17 @@ function HTTPRequest(url, method, postdatatbl, callback)
 	pClient:Connect(host, 80);
 end
 
+-- Why is this not in the default string.lua?
+function string.IndexOf(needle, haystack)
+	for i = 1, #haystack do
+		if (haystack[i] == needle) then
+			return i
+		end
+	end
+	
+	return -1
+end
+
 -- headers is a table containing all the headers lowercase
 -- body is the source of the webpage
 HTTPRequest("http://4o3.nl", "GET", nil, function(headers, body)
