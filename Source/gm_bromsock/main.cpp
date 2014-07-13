@@ -19,7 +19,7 @@ using namespace BromScript;
 #define GETSOCK(num) (SockWrapper*)((GarrysMod::Lua::UserData*)LUA->GetUserdata(num))->data
 #define GETPACK(num) (Packet*)((GarrysMod::Lua::UserData*)LUA->GetUserdata(num))->data
 #define ADDFUNC(fn, f) LUA->PushCFunction(f); LUA->SetField(-2, fn);
-#define CALLLUAFUNC(args) LUA->PCall(args, 0, -2 - args); LUA->Pop();
+#define CALLLUAFUNC(args) LUA->Call(args, 0); LUA->Pop();
 #define UD_TYPE_SOCKET 122
 #define UD_TYPE_PACKET 123
 
