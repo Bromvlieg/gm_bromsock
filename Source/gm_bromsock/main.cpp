@@ -694,6 +694,32 @@ GMOD_FUNCTION(SOCK_AddWorker){
 	return 0;
 }
 
+GMOD_FUNCTION(SOCK_SetOption){
+	DEBUGPRINTFUNC;
+
+	LUA->CheckType(1, UD_TYPE_SOCKET);
+	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+	LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER);
+	LUA->CheckType(4, GarrysMod::Lua::Type::NUMBER);
+	
+	int level = (int)LUA->GetNumber(2);
+	int option = (int)LUA->GetNumber(3);
+	int value = (int)LUA->GetNumber(4);
+
+	SockWrapper* s = GETSOCK(1);
+	
+#ifdef _MSC_VER
+	DWORD value_win = (DWORD)value;
+	int ret = setsockopt(s->Sock->sock, level, option, (const char*)&value_win, sizeof(value_win));
+#else
+	int ret = setsockopt(s->Sock->sock, level, option, &value, sizeof(value));
+#endif
+
+	// Should be SOCKET_ERROR, but linux does not have SOCKET_ERROR defined.
+	LUA->PushBool(ret != -1);
+	return 1;
+}
+
 GMOD_FUNCTION(SOCK_SetTimeout){
 	DEBUGPRINTFUNC;
 
@@ -871,6 +897,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("GetState", SOCK_GetState);
 		ADDFUNC("AddWorker", SOCK_AddWorker);
 		ADDFUNC("SetTimeout", SOCK_SetTimeout);
+		ADDFUNC("SetOption", SOCK_SetOption);
 		ADDFUNC("SetCallbackReceive", SOCK_CALLBACKReceive);
 		ADDFUNC("SetCallbackSend", SOCK_CALLBACKSend);
 		ADDFUNC("SetCallbackConnect", SOCK_CALLBACKConnect);
