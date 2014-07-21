@@ -118,6 +118,7 @@ namespace BromScript{
 #ifdef _MSC_VER
 		::closesocket(sock);
 #else
+		::shutdown(sock, SHUT_RDRW)
 		::close(sock);
 #endif
 	}

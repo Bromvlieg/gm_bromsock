@@ -24,14 +24,17 @@ using namespace BromScript;
 #define UD_TYPE_PACKET 123
 
 #ifdef _DEBUG
-#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField( -1, "print" ); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call( 1, 0 ); LUA->Pop();
+#define DEBUGPRINTFUNC LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField(-1, "print"); char dbuff[256]; sprintf_s(dbuff, "BS: CURF: %s", __FUNCTION__); LUA->PushString(dbuff); LUA->Call(1, 0); LUA->Pop();
+#define DEBUGPRINT(msg) LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB); LUA->GetField(-1, "print"); LUA->PushString("BS: DEBUG:"); LUA->PushString(msg); LUA->Call(2, 0); LUA->Pop();
 #else
 #define DEBUGPRINTFUNC
+#define DEBUGPRINT(msg)
 #endif
 
 static int PacketRef = 0;
 static int SocketRef = 0;
 
+GMOD_FUNCTION(ThinkHook);
 class SockWrapper;
 static std::vector<SockWrapper*> AllocatedSockets;
 
@@ -107,9 +110,9 @@ public:
 		DEBUGPRINTFUNC;
 
 		this->CallDisconnect();
-		this->Sock->close();
 		
 		this->KillWorkers();
+		this->Sock->close();
 
 		delete this->Sock;
 		this->Sock = new EzSock();
@@ -158,9 +161,15 @@ public:
 		if (this->Callback_Send != -1) LUA->ReferenceFree(this->Callback_Send);
 		if (this->Callback_Disconnect != -1) LUA->ReferenceFree(this->Callback_Disconnect);
 		
-		this->Sock->close();
-		
 		this->KillWorkers();
+		this->Mutex.Lock();
+		while (this->Todo.size() > 0){
+			delete this->Todo[0];
+			this->Todo.erase(this->Todo.begin());
+		}
+
+		ThinkHook(this->state);
+		this->Mutex.Unlock();
 
 		delete this->Sock;
 	}
