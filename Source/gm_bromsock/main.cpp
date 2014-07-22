@@ -751,6 +751,15 @@ GMOD_FUNCTION(SOCK_SetTimeout){
 	return 1;
 }
 
+GMOD_FUNCTION(SOCK_Create){
+	DEBUGPRINTFUNC;
+
+	LUA->CheckType(1, UD_TYPE_SOCKET);
+	(GETSOCK(1))->Sock->create();
+	
+	return 0;
+}
+
 GMOD_FUNCTION(SOCK__TOSTRING){
 	DEBUGPRINTFUNC;
 
@@ -895,6 +904,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("SetBlocking", SOCK_SetBlocking);
 		ADDFUNC("Connect", SOCK_Connect);
 		ADDFUNC("Close", SOCK_Disconnect);
+		ADDFUNC("Create", SOCK_Create);
 		ADDFUNC("Disconnect", SOCK_Disconnect);
 		ADDFUNC("Listen", SOCK_Listen);
 		ADDFUNC("Send", SOCK_Send);

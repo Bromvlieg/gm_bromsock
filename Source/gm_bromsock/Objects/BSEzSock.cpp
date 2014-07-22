@@ -71,6 +71,9 @@ namespace BromScript{
 	}
 
 	bool EzSock::create(int Protocol, int Type){
+		if (this->check())
+			return false;
+			
 		state = skDISCONNECTED;
 		sock = ::socket(AF_INET, Type, Protocol);
 		lastCode = sock;
@@ -121,6 +124,8 @@ namespace BromScript{
 		::shutdown(sock, SHUT_RDWR);
 		::close(sock);
 #endif
+
+		sock = INVALID_SOCKET;
 	}
 
 	long EzSock::uAddr(){
