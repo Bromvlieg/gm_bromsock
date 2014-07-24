@@ -31,7 +31,7 @@ function HTTPRequest(url, method, postdatatbl, callback)
 	if (#path == 0) then path = "/" end
 	
 	if (postdatatbl) then
-		for k, v in pairs(data) do
+		for k, v in pairs(postdatatbl) do
 			postdata = postdata .. k .. "=" .. v .. "&"
 		end
 		
@@ -48,7 +48,7 @@ function HTTPRequest(url, method, postdatatbl, callback)
 		pClient:Send( pPacket, true );
 	end
 	
-	pClient:SetCallbackConnect( function( pSocket, bConnected, szIP, iPort )
+	pClient:SetCallbackConnect( function( _, bConnected, szIP, iPort )
 		if (not bConnected) then
 			callback(nil, nil)
 			return;
@@ -62,14 +62,17 @@ function HTTPRequest(url, method, postdatatbl, callback)
 		end
 		
 		sendline("");
+		
+		if (method:lower() == "post") then
+			sendline(postdata)
+		end
 
 		pClient:ReceiveUntil( "\r\n\r\n" );
 	end );
 	
-	pClient:SetCallbackReceive( function( pSocket, pPacket )
-		local iSize = pPacket && pPacket:InSize() || -1;
-		
-		local szMessage = pPacket:ReadStringAll():Trim()
+	pClient:SetCallbackReceive( function( _, incommingpacket )
+		local szMessage = incommingpacket:ReadStringAll():Trim()
+		incommingpacket = nil
 		
 		if (not headers) then
 			local headers_tmp = string.Explode("\r\n", szMessage)
@@ -103,6 +106,8 @@ function HTTPRequest(url, method, postdatatbl, callback)
 				if (len == 0) then
 					callback(headers, bigbooty)
 					pClient:Close()
+					pClient = nil
+					pPacket = nil
 					return
 				end
 				
@@ -112,6 +117,8 @@ function HTTPRequest(url, method, postdatatbl, callback)
 		else
 			callback(headers, szMessage)
 			pClient:Close()
+			pClient = nil
+			pPacket = nil
 		end
 	end)
 	
