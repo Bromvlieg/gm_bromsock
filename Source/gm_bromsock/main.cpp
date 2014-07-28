@@ -8,6 +8,7 @@
 #ifdef _MSC_VER
 #include <Windows.h>
 #else
+#include <netdb.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
