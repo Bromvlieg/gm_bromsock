@@ -766,9 +766,6 @@ GMOD_FUNCTION(SOCK_Receive){
 	DEBUGPRINTFUNC;
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
-	if (!LUA->IsType(2, GarrysMod::Lua::Type::NIL)){
-		LUA->CheckNumber(2);
-	}
 
 	int toread = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1;
 
