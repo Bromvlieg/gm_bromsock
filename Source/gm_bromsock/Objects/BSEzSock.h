@@ -64,8 +64,8 @@ namespace BromScript{
 		int sock;
 		int Receive(unsigned char* buffer, int size, int spos = 0);
 		int SendRaw(unsigned char* data, int dataSize);
-		int SendUDP(unsigned char* buffer, int size, sockaddr* to);
-		int ReceiveUDP(unsigned char* buffer, int size, sockaddr* from);
+		int SendUDP(unsigned char* buffer, int size, sockaddr_in* to);
+		int ReceiveUDP(unsigned char* buffer, int size, sockaddr_in* from);
 
 	private:
 #ifdef _MSC_VER

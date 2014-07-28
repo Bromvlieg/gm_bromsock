@@ -45,7 +45,7 @@ void* SockWorker(void *obj);
 #endif
 
 enum class EventType {
-	NONE, Connect, Send, Receive, Accept
+	NONE, Connect, Send, Receive, Accept, SendTo, ReceiveFrom
 };
 
 class SockEvent{
@@ -54,8 +54,9 @@ public:
 	void* data1;
 	void* data2;
 	void* data3;
+	void* data4;
 
-	SockEvent():data1(null), data2(null), data3(null), Type(EventType::NONE) {}
+	SockEvent() :data1(null), data2(null), data3(null), data4(null), Type(EventType::NONE) {}
 };
 
 class SockWrapper{
@@ -64,7 +65,9 @@ public:
 	lua_State* state;
 
 	int Callback_Receive;
+	int Callback_ReceiveFrom;
 	int Callback_Send;
+	int Callback_SendTo;
 	int Callback_Connect;
 	int Callback_Disconnect;
 	int Callback_Accept;
@@ -72,15 +75,14 @@ public:
 	int RefCount;
 	bool DestoryWorkers;
 	bool DidDisconnectCallback;
+
+	int SocketType;
 	
 	std::vector<SockEvent*> Todo;
 	std::vector<SockEvent*> Callbacks;
 	LockObject Mutex;
 	
-	SockWrapper(lua_State* ls):Callback_Accept(-1),Callback_Receive(-1),Callback_Connect(-1),Callback_Send(-1),Callback_Disconnect(-1),CurrentWorkers(0),RefCount(0),DestoryWorkers(false),DidDisconnectCallback(false){
-		this->Sock = new EzSock();
-		this->state = ls;
-	}
+	SockWrapper(lua_State* ls, int type = IPPROTO_TCP):Sock(new EzSock()),state(ls),SocketType(type),Callback_Accept(-1), Callback_Receive(-1), Callback_Connect(-1), Callback_Send(-1), Callback_Disconnect(-1), Callback_ReceiveFrom(-1), Callback_SendTo(-1), CurrentWorkers(0), RefCount(0), DestoryWorkers(false), DidDisconnectCallback(false){}
 
 	void PushToStack(lua_State* state){
 		DEBUGPRINTFUNC;
@@ -158,7 +160,9 @@ public:
 		if (this->Callback_Accept != -1) LUA->ReferenceFree(this->Callback_Accept);
 		if (this->Callback_Connect != -1) LUA->ReferenceFree(this->Callback_Connect);
 		if (this->Callback_Receive != -1) LUA->ReferenceFree(this->Callback_Receive);
+		if (this->Callback_ReceiveFrom != -1) LUA->ReferenceFree(this->Callback_ReceiveFrom);
 		if (this->Callback_Send != -1) LUA->ReferenceFree(this->Callback_Send);
+		if (this->Callback_SendTo != -1) LUA->ReferenceFree(this->Callback_SendTo);
 		if (this->Callback_Disconnect != -1) LUA->ReferenceFree(this->Callback_Disconnect);
 		
 		this->KillWorkers();
@@ -247,21 +251,64 @@ void* SockWorker(void *obj){
 			if (cur->data1 == null){
 				if (p->CanRead(seq)){
 					ne->data1 = p;
-				}else{
+				}
+				else{
 					delete p;
 				}
-			}else{
+			}
+			else{
 				if ((*len == -1 && (*len = p->ReadInt()) == 0) || !p->CanRead(*len)){
 					delete p;
-				}else{
+				}
+				else{
 					ne->data1 = p;
 				}
 			}
 
 			ne->Type = EventType::Receive;
-			
+
 			if (cur->data1 != null) delete (int*)cur->data1;
-			if (cur->data2 != null) delete[] (char*)cur->data1;
+			if (cur->data2 != null) delete[](char*)cur->data1;
+		}break;
+
+		case EventType::ReceiveFrom:{
+			int* len = (int*)cur->data1;
+			Packet* p = new Packet(sock->Sock);
+
+			unsigned char* buffer = new unsigned char[*len];
+			sockaddr_in* clientaddr = new sockaddr_in;
+
+			if (cur->data2 != null){
+				struct hostent* lookup = gethostbyname((char*)cur->data2);
+				if (lookup != null){
+					memset((char *)&clientaddr, 0, sizeof(clientaddr));
+					clientaddr->sin_family = AF_INET;
+					memcpy(&clientaddr->sin_addr, lookup->h_addr_list[0], lookup->h_length);
+					clientaddr->sin_port = htons(*(int*)cur->data3);
+				}
+
+				delete[] (char*)cur->data2;
+				delete (int*)cur->data3;
+			}
+
+			int recdata = sock->Sock->ReceiveUDP(buffer, *len, clientaddr);
+
+			if (recdata == -1){
+				delete p;
+			}else{
+				p->InBuffer = new unsigned char[recdata];
+				p->InSize = recdata;
+
+				memcpy(p->InBuffer, buffer, recdata);
+				delete[] buffer;
+
+				ne->data1 = p;
+				ne->data2 = clientaddr;
+			}
+
+			ne->Type = EventType::ReceiveFrom;
+
+			if (cur->data1 != null) delete (int*)cur->data1;
 		}break;
 
 		case EventType::Send:{
@@ -278,9 +325,10 @@ void* SockWorker(void *obj){
 				p.Send();
 
 				sent = outpos + 4;
-			}else{
+			}
+			else{
 				int curpos = 0;
-				while(curpos != outpos){
+				while (curpos != outpos){
 					int ret = sock->Sock->SendRaw(outbuffer + curpos, outpos - curpos);
 					if (ret <= 0){
 						sock->Sock->Valid = false;
@@ -289,18 +337,55 @@ void* SockWorker(void *obj){
 
 					curpos += ret;
 				}
-				
+
 				sent = curpos;
-				
+
 				delete[] outbuffer;
 			}
-			
+
 			delete sendsize;
 			delete (int*)cur->data3;
-			
+
 			ne->data1 = new bool(sock->Sock->Valid);
 			ne->data2 = new int(sent);
 			ne->Type = EventType::Send;
+		}break;
+
+		case EventType::SendTo:{
+			unsigned char* outbuffer = (unsigned char*)cur->data1;
+			int outpos = *(int*)cur->data2;
+			char* ip = (char*)cur->data3;
+			int port = *(int*)cur->data4;
+
+			struct sockaddr_in servaddr;
+			struct hostent* lookup = gethostbyname(ip);
+			if (lookup != null){
+				memset((char *)&servaddr, 0, sizeof(servaddr));
+				servaddr.sin_family = AF_INET;
+				memcpy(&servaddr.sin_addr, lookup->h_addr_list[0], lookup->h_length);
+				servaddr.sin_port = htons(port);
+
+				int curpos = 0;
+				while (curpos != outpos){
+					int ret = sendto(sock->Sock->sock, (char*)outbuffer + curpos, outpos - curpos, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
+
+					if (ret <= 0){
+						delete lookup;
+						lookup = null;
+						break;
+					}
+
+					curpos += ret;
+				}
+			}
+
+			delete[] outbuffer;
+
+			ne->data1 = new bool(lookup != null);
+			ne->data2 = cur->data2;
+			ne->data3 = cur->data3;
+			ne->data4 = cur->data4;
+			ne->Type = EventType::SendTo;
 		}break;
 
 		}
@@ -337,7 +422,12 @@ GMOD_FUNCTION(CreatePacket){
 GMOD_FUNCTION(CreateSocket){
 	DEBUGPRINTFUNC;
 
-	SockWrapper* nsw = new SockWrapper(state);
+	int type = IPPROTO_TCP;
+	if (!LUA->IsType(1, GarrysMod::Lua::Type::NIL)){
+		type = (int)LUA->CheckNumber(1);
+	}
+
+	SockWrapper* nsw = new SockWrapper(state, type);
 	AllocatedSockets.push_back(nsw);
 
 	nsw->PushToStack(state);
@@ -403,18 +493,40 @@ GMOD_FUNCTION(ThinkHook){
 			case EventType::Send:{
 				bool* valid = (bool*)se->data1;
 				int* size = (int*)se->data2;
-				
+
 				if (*valid){
 					LUA->ReferencePush(sw->Callback_Send);
 					sw->PushToStack(state);
 					LUA->PushNumber((double)*size);
 					CALLLUAFUNC(2);
-				}else{
+				}
+				else{
 					sw->CallDisconnect();
 				}
 
 				delete valid;
 				delete size;
+			}break;
+
+			case EventType::SendTo:{
+				bool* valid = (bool*)se->data1;
+				int* size = (int*)se->data2;
+				char* ip = (char*)se->data3;
+				int* port = (int*)se->data4;
+
+				if (sw->Callback_SendTo != -1){
+					LUA->ReferencePush(sw->Callback_SendTo);
+					sw->PushToStack(state);
+					LUA->PushNumber((double)*size);
+					LUA->PushString(ip);
+					LUA->PushNumber((double)*port);
+					CALLLUAFUNC(4);
+				}
+
+				delete valid;
+				delete size;
+				delete port;
+				delete[] ip;
 			}break;
 
 			case EventType::Receive:{
@@ -428,12 +540,36 @@ GMOD_FUNCTION(ThinkHook){
 					ud->data = p;
 					ud->type = UD_TYPE_PACKET;
 					LUA->ReferencePush(PacketRef);
-					LUA->SetMetaTable( -2 );
+					LUA->SetMetaTable(-2);
 					p->RefCount++;
 
 					CALLLUAFUNC(2);
-				}else{
+				}
+				else{
 					sw->CallDisconnect();
+				}
+			}break;
+
+			case EventType::ReceiveFrom:{
+				Packet* p = (Packet*)se->data1;
+				sockaddr_in* caddr = (sockaddr_in*)se->data2;
+
+				if (p != null){
+					LUA->ReferencePush(sw->Callback_ReceiveFrom);
+					sw->PushToStack(state);
+
+					GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
+					ud->data = p;
+					ud->type = UD_TYPE_PACKET;
+					LUA->ReferencePush(PacketRef);
+					LUA->SetMetaTable(-2);
+					p->RefCount++;
+
+					LUA->PushString(inet_ntoa(caddr->sin_addr));
+					LUA->PushNumber(ntohs(caddr->sin_port));
+					CALLLUAFUNC(4);
+
+					delete caddr;
 				}
 			}break;
 			}
@@ -453,7 +589,7 @@ GMOD_FUNCTION(SOCK_Connect){
 	LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER);
 
 	SockWrapper* s = GETSOCK(1);
-	s->Sock->create();
+	s->Sock->create(s->SocketType);
 	s->CreateWorkers();
 
 	if (s->Callback_Connect > -1){
@@ -482,14 +618,27 @@ GMOD_FUNCTION(SOCK_Listen){
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
 	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
-	
+
 	SockWrapper* s = GETSOCK(1);
-	s->Sock->create();
+	s->Sock->create(s->SocketType);
 
 	bool ret = s->Sock->bind((unsigned short)LUA->GetNumber(2)) && s->Sock->listen();
 	if (ret) s->CreateWorkers();
 
 	LUA->PushBool(ret);
+	return 1;
+}
+
+GMOD_FUNCTION(SOCK_Bind){
+	DEBUGPRINTFUNC;
+
+	LUA->CheckType(1, UD_TYPE_SOCKET);
+	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+
+	SockWrapper* s = GETSOCK(1);
+	s->Sock->create(s->SocketType);
+
+	LUA->PushBool(s->Sock->bind((unsigned short)LUA->GetNumber(2)));
 	return 1;
 }
 
@@ -511,6 +660,50 @@ GMOD_FUNCTION(SOCK_Disconnect){
 	LUA->CheckType(1, UD_TYPE_SOCKET);
 
 	(GETSOCK(1))->Reset();
+
+	return 0;
+}
+
+GMOD_FUNCTION(SOCK_SendTo){
+	DEBUGPRINTFUNC;
+
+	LUA->CheckType(1, UD_TYPE_SOCKET);
+	LUA->CheckType(2, UD_TYPE_PACKET);
+	LUA->CheckType(3, GarrysMod::Lua::Type::STRING);
+	LUA->CheckType(4, GarrysMod::Lua::Type::NUMBER);
+
+	SockWrapper* s = (GETSOCK(1));
+	Packet* p = GETPACK(2);
+
+	// It doesn't make sense to FORCE this. We can't return true or false due UDP. So callbacks or not, we're not going to return jack shit.
+	// if (s->Callback_SendTo == -1) LUA->ThrowError("SendTo only supports callbacks. Please use this. It's the way to go for networking.");
+
+	s->Sock->create(s->SocketType);
+
+	const char* luaip = LUA->GetString(3);
+	int iplen = strlen(luaip) + 1;
+	char* ip = new char[iplen];
+	memcpy(ip, luaip, iplen);
+
+	SockEvent* se = new SockEvent();
+	se->Type = EventType::SendTo;
+	se->data1 = p->OutBuffer;
+	se->data2 = new int(p->OutPos);
+	se->data3 = ip;
+	se->data4 = new int((int)LUA->GetNumber(4));
+
+	// reset the packet
+	p->OutBuffer = null;
+	p->OutPos = 0;
+	p->OutSize = 0;
+
+	s->Mutex.Lock();
+	s->Todo.push_back(se);
+	s->Mutex.Unlock();
+
+	if (s->CurrentWorkers == 0){
+		s->CreateWorkers();
+	}
 
 	return 0;
 }
@@ -577,7 +770,7 @@ GMOD_FUNCTION(SOCK_Receive){
 	}
 
 	int toread = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1;
-	
+
 	SockWrapper* s = GETSOCK(1);
 	if (s->Callback_Receive > -1){
 		SockEvent* se = new SockEvent();
@@ -588,7 +781,8 @@ GMOD_FUNCTION(SOCK_Receive){
 		s->Todo.push_back(se);
 		s->Mutex.Unlock();
 		return 0;
-	}else{
+	}
+	else{
 		Packet* p = new Packet(s->Sock);
 		if (toread == -1){
 			toread = p->ReadInt();
@@ -599,16 +793,51 @@ GMOD_FUNCTION(SOCK_Receive){
 			LUA->PushBool(false);
 			return 1;
 		}
-		
+
 		GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
 		ud->data = p;
 		ud->type = UD_TYPE_PACKET;
 
 		LUA->ReferencePush(PacketRef);
-		LUA->SetMetaTable( -2 );
+		LUA->SetMetaTable(-2);
 		p->RefCount++;
 		return 1;
 	}
+}
+
+GMOD_FUNCTION(SOCK_ReceiveFrom){
+	DEBUGPRINTFUNC;
+
+	LUA->CheckType(1, UD_TYPE_SOCKET);
+
+	SockWrapper* s = GETSOCK(1);
+	if (s->Callback_ReceiveFrom == -1) LUA->ThrowError("ReceiveFrom only supports callbacks. Please use this. It's the way to go for networking.");
+
+	int toread = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : 65535; // max "theoretical" diagram size
+
+	SockEvent* se = new SockEvent();
+	se->Type = EventType::ReceiveFrom;
+	se->data1 = new int(toread);
+
+	if (LUA->IsType(3, GarrysMod::Lua::Type::STRING) && LUA->IsType(4, GarrysMod::Lua::Type::NUMBER)){
+		const char* luaip = LUA->GetString(3);
+		int iplen = strlen(luaip) + 1;
+		char* ip = new char[iplen];
+		memcpy(ip, luaip, iplen);
+
+		se->data2 = ip;
+		se->data3 = new int((int)LUA->GetNumber(4));
+	}
+
+	s->Mutex.Lock();
+	s->Todo.push_back(se);
+	s->Mutex.Unlock();
+
+	if (s->CurrentWorkers == 0){
+		s->CreateWorkers();
+	}
+
+	return 0;
 }
 
 GMOD_FUNCTION(SOCK_ReceiveUntil){
@@ -653,7 +882,9 @@ GMOD_FUNCTION(SOCK_ReceiveUntil){
 }
 
 GMOD_FUNCTION(SOCK_CALLBACKSend){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_Send = LUA->ReferenceCreate(); return 0; }
+GMOD_FUNCTION(SOCK_CALLBACKSendTo){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_SendTo = LUA->ReferenceCreate(); return 0; }
 GMOD_FUNCTION(SOCK_CALLBACKReceive){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_Receive = LUA->ReferenceCreate(); return 0; }
+GMOD_FUNCTION(SOCK_CALLBACKReceiveFrom){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_ReceiveFrom = LUA->ReferenceCreate(); return 0; }
 GMOD_FUNCTION(SOCK_CALLBACKConnect){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_Connect = LUA->ReferenceCreate(); return 0; }
 GMOD_FUNCTION(SOCK_CALLBACKAccept){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_Accept = LUA->ReferenceCreate(); return 0; }
 GMOD_FUNCTION(SOCK_CALLBACKDisconnect){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->CheckType(2, GarrysMod::Lua::Type::FUNCTION); LUA->Push(2); (GETSOCK(1))->Callback_Disconnect = LUA->ReferenceCreate(); return 0; }
@@ -755,7 +986,9 @@ GMOD_FUNCTION(SOCK_Create){
 	DEBUGPRINTFUNC;
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
-	(GETSOCK(1))->Sock->create();
+
+	SockWrapper* s = GETSOCK(1);
+	s->Sock->create(s->SocketType);
 	
 	return 0;
 }
@@ -907,9 +1140,12 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("Create", SOCK_Create);
 		ADDFUNC("Disconnect", SOCK_Disconnect);
 		ADDFUNC("Listen", SOCK_Listen);
+		ADDFUNC("Bind", SOCK_Bind);
 		ADDFUNC("Send", SOCK_Send);
+		ADDFUNC("SendTo", SOCK_SendTo);
 		ADDFUNC("Accept", SOCK_Accept);
 		ADDFUNC("Receive", SOCK_Receive);
+		ADDFUNC("ReceiveFrom", SOCK_ReceiveFrom);
 		ADDFUNC("ReceiveUntil", SOCK_ReceiveUntil);
 		ADDFUNC("GetIP", SOCK_GetIP);
 		ADDFUNC("GetPort", SOCK_GetPort);
@@ -918,7 +1154,9 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("SetTimeout", SOCK_SetTimeout);
 		ADDFUNC("SetOption", SOCK_SetOption);
 		ADDFUNC("SetCallbackReceive", SOCK_CALLBACKReceive);
+		ADDFUNC("SetCallbackReceiveFrom", SOCK_CALLBACKReceiveFrom);
 		ADDFUNC("SetCallbackSend", SOCK_CALLBACKSend);
+		ADDFUNC("SetCallbackSendTo", SOCK_CALLBACKSendTo);
 		ADDFUNC("SetCallbackConnect", SOCK_CALLBACKConnect);
 		ADDFUNC("SetCallbackAccept", SOCK_CALLBACKAccept);
 		ADDFUNC("SetCallbackDisconnect", SOCK_CALLBACKDisconnect);
@@ -969,6 +1207,16 @@ GMOD_MODULE_OPEN(){
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->PushString("BromPacket");
 	LUA->PushCFunction(CreatePacket);
+	LUA->SetTable(-3);
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushString("BROMSOCK_TCP");
+	LUA->PushNumber(IPPROTO_TCP);
+	LUA->SetTable(-3);
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushString("BROMSOCK_UDP");
+	LUA->PushNumber(IPPROTO_UDP);
 	LUA->SetTable(-3);
 
 	LUA->CreateTable();

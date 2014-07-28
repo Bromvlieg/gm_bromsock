@@ -49,8 +49,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY "$(TargetPath)" "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmsv_bromsock_win32.dll"
-COPY "$(TargetPath)" "D:\Games\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmcl_bromsock_win32.dll"</Command>
+      <Command>COPY "$(TargetPath)" "D:\Software\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmsv_bromsock_win32.dll"
+COPY "$(TargetPath)" "D:\Software\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmcl_bromsock_win32.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

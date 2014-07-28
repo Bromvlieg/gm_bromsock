@@ -175,13 +175,13 @@ namespace BromScript{
 		return true;
 	}
 
-	int EzSock::ReceiveUDP(unsigned char* buffer, int size, sockaddr* from){
+	int EzSock::ReceiveUDP(unsigned char* buffer, int size, sockaddr_in* from){
 #ifdef _MSC_VER
 		int client_length = (int)sizeof(struct sockaddr_in);
-		return recvfrom(this->sock, (char*)buffer, size, 0, from, &client_length);
+		return recvfrom(this->sock, (char*)buffer, size, 0, (struct sockaddr*)from, &client_length);
 #else
 		unsigned int client_length = (unsigned int)sizeof(struct sockaddr_in);
-		return recvfrom(this->sock, (char*)buffer, size, 0, from, &client_length);
+		return recvfrom(this->sock, (char*)buffer, size, 0, (struct sockaddr*)from, &client_length);
 #endif
 	}
 
@@ -189,8 +189,8 @@ namespace BromScript{
 		return recv(this->sock, (char*)buffer + spos, size, 0);
 	}
 
-	int EzSock::SendUDP(unsigned char* buffer, int size, sockaddr* to){
-		return sendto(this->sock, (char*)buffer, size, 0, to, sizeof(struct sockaddr_in));
+	int EzSock::SendUDP(unsigned char* buffer, int size, sockaddr_in* to){
+		return sendto(this->sock, (char*)buffer, size, 0, (struct sockaddr *)&to, sizeof(struct sockaddr_in));
 	}
 
 	int EzSock::SendRaw(unsigned char* data, int dataSize){
