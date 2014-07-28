@@ -77,15 +77,13 @@ if CLIENT then
 		sock:Disconnect()
 	end)
 
-	-- Currently disabled, won't be called.
-	--[[
 	client:SetCallbackSend(function(sock, datasent)
 		print("[BS:C] Sent:", "", sock, datasent)
 		
 		-- we expect a response form the server after he received this, so instead of calling Receive at the connect callback, we do it here.
 		client:Receive()
 	end)
-	]]--
+	
 
 	client:Connect("127.0.0.1", 6789)
 end
