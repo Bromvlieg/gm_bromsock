@@ -424,7 +424,7 @@ GMOD_FUNCTION(CreateSocket){
 	DEBUGPRINTFUNC;
 
 	int type = IPPROTO_TCP;
-	if (!LUA->IsType(1, GarrysMod::Lua::Type::NIL)){
+	if (LUA->IsType(1, GarrysMod::Lua::Type::NUMBER)){
 		type = (int)LUA->CheckNumber(1);
 	}
 
