@@ -216,6 +216,9 @@ void* SockWorker(void *obj){
 			continue;
 		}
 
+		// add ref count as we're busy doing something, this is to prevent GC calls
+		sock->RefCount++;
+
 		SockEvent* ne = new SockEvent();
 
 		switch(cur->Type){
@@ -576,6 +579,9 @@ GMOD_FUNCTION(ThinkHook){
 			}
 
 			delete se;
+
+			// Balance the refcount back to normal
+			sw->RefCount--;
 		}
 	}
 
@@ -1256,6 +1262,24 @@ GMOD_MODULE_OPEN(){
 
 GMOD_MODULE_CLOSE(){
 	DEBUGPRINTFUNC;
+
+	// force socket & threads shutdown on.... module shutdown
+	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
+		AllocatedSockets[i]->Reset();
+	}
+
+	// call thinkhook to handle remaining events
+	ThinkHook(state);
+
+	// reference count SHOULD be 0 now, if not, lua wil deal with it
+	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
+		SockWrapper* s = AllocatedSockets[i];
+		if (s->RefCount == 0){
+			AllocatedSockets.erase(AllocatedSockets.begin() + i);
+			delete  s;
+		}
+	}
+
 
 	// reset to original state. Just to be sure.
 	AllocatedSockets.clear();
