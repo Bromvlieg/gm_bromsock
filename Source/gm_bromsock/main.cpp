@@ -127,6 +127,8 @@ public:
 		if (this->DidDisconnectCallback || this->Callback_Disconnect == -1) return;
 		this->DidDisconnectCallback = true;
 
+		this->Sock->state = EzSock::SockState::skDISCONNECTED;
+
 		LUA->ReferencePush(this->Callback_Disconnect);
 		this->PushToStack(state);
 		LUA->Call(1, 0);
@@ -215,9 +217,6 @@ void* SockWorker(void *obj){
 #endif
 			continue;
 		}
-
-		// add ref count as we're busy doing something, this is to prevent GC calls
-		sock->RefCount++;
 
 		SockEvent* ne = new SockEvent();
 
@@ -579,9 +578,6 @@ GMOD_FUNCTION(ThinkHook){
 			}
 
 			delete se;
-
-			// Balance the refcount back to normal
-			sw->RefCount--;
 		}
 	}
 
@@ -1035,6 +1031,14 @@ GMOD_FUNCTION(SOCK__GC){
 
 	s->RefCount--;
 	if (s->RefCount == 0){
+		s->Mutex.Lock();
+		bool isdone = s->CurrentWorkers == 0;
+		s->Mutex.Unlock();
+
+		if (!isdone){
+			return 0;
+		}
+
 		for (unsigned i = 0; i < AllocatedSockets.size(); i++){
 			if (AllocatedSockets[i] == s){
 				AllocatedSockets.erase(AllocatedSockets.begin() + i);
@@ -1042,6 +1046,7 @@ GMOD_FUNCTION(SOCK__GC){
 			}
 		}
 
+		DEBUGPRINT("KILLING SOCKET");
 		delete s;
 	}
 
@@ -1091,7 +1096,7 @@ GMOD_FUNCTION(PACK__GC){
 	return 0;
 }
 
-GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITESByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteByte((unsigned char)(LUA->GetNumber(2) + 128)); return 0; }
 GMOD_FUNCTION(PACK_WRITEShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteShort((short)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITEUShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteUShort((unsigned short)LUA->GetNumber(2)); return 0; }
@@ -1133,6 +1138,17 @@ GMOD_FUNCTION(SOCK_IsValid){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); 
 GMOD_FUNCTION(SOCK_GetIP){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushString(inet_ntoa((GETSOCK(1))->Sock->addr.sin_addr)); return 1; }
 GMOD_FUNCTION(SOCK_GetPort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber(ntohs((GETSOCK(1))->Sock->addr.sin_port)); return 1; }
 GMOD_FUNCTION(SOCK_GetState){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber((GETSOCK(1))->Sock->state); return 1; }
+
+GMOD_FUNCTION(ShutdownHook){
+	DEBUGPRINTFUNC;
+
+	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
+		AllocatedSockets[i]->Reset();
+	}
+
+	ThinkHook(state);
+	return 0;
+}
 
 GMOD_MODULE_OPEN(){
 	DEBUGPRINTFUNC;
@@ -1243,13 +1259,22 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("__gc", SOCK__GC);
 
 	SocketRef = LUA->ReferenceCreate();
-
+	
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->GetField(-1, "hook");
 	LUA->GetField(-1, "Add");
 	LUA->PushString("Tick");
 	LUA->PushString("BS::TICK");
 	LUA->PushCFunction(ThinkHook);
+	LUA->Call(3, 0);
+	LUA->Pop();
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->GetField(-1, "hook");
+	LUA->GetField(-1, "Add");
+	LUA->PushString("ShutDown");
+	LUA->PushString("BS::SHUTDOWN");
+	LUA->PushCFunction(ShutdownHook);
 	LUA->Call(3, 0);
 	LUA->Pop();
 	
@@ -1262,27 +1287,6 @@ GMOD_MODULE_OPEN(){
 
 GMOD_MODULE_CLOSE(){
 	DEBUGPRINTFUNC;
-
-	// force socket & threads shutdown on.... module shutdown
-	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
-		AllocatedSockets[i]->Reset();
-	}
-
-	// call thinkhook to handle remaining events
-	ThinkHook(state);
-
-	// reference count SHOULD be 0 now, if not, lua wil deal with it
-	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
-		SockWrapper* s = AllocatedSockets[i];
-		if (s->RefCount == 0){
-			AllocatedSockets.erase(AllocatedSockets.begin() + i);
-			delete  s;
-		}
-	}
-
-
-	// reset to original state. Just to be sure.
-	AllocatedSockets.clear();
 
 	LUA->ReferenceFree(SocketRef);
 	LUA->ReferenceFree(PacketRef);
