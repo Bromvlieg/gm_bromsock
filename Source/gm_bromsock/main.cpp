@@ -1096,20 +1096,20 @@ GMOD_FUNCTION(PACK__GC){
 	return 0;
 }
 
-GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(1, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITESByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteByte((unsigned char)(LUA->GetNumber(2) + 128)); return 0; }
-GMOD_FUNCTION(PACK_WRITEShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteShort((short)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEUShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteUShort((unsigned short)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEFloat){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteFloat((float)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteInt((int)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEUInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteUInt((unsigned int)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEDouble){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteDouble(LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITELong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteLong((long long)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteULong((unsigned long long)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteString(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEStringRaw){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteStringRaw(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITELine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteLine(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITESByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)(LUA->GetNumber(2) + 128)); return 0; }
+GMOD_FUNCTION(PACK_WRITEShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteShort((short)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEUShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteUShort((unsigned short)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEFloat){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteFloat((float)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteInt((int)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEUInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteUInt((unsigned int)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEDouble){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteDouble(LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITELong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteLong((long long)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteULong((unsigned long long)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteString(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEStringRaw){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteStringRaw(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITELine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteLine(LUA->GetString(2)); return 0; }
 
 GMOD_FUNCTION(PACK_READByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadByte()); return 1; }
 GMOD_FUNCTION(PACK_READSByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)((GETPACK(1))->ReadByte() - 128)); return 1; }
@@ -1125,7 +1125,7 @@ GMOD_FUNCTION(PACK_READString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET
 GMOD_FUNCTION(PACK_READStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringNT()); return 1; }
 GMOD_FUNCTION(PACK_READStringAll){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringAll()); return 1; }
 GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil("\r\n")); return 1; }
-GMOD_FUNCTION(PACK_READUntil){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
+GMOD_FUNCTION(PACK_READUntil){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
 
 GMOD_FUNCTION(PACK_InSize){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InSize); return 1; }
 GMOD_FUNCTION(PACK_InPos){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InPos); return 1; }
