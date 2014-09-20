@@ -128,6 +128,8 @@ public:
 		if (this->DidDisconnectCallback || this->Callback_Disconnect == -1) return;
 		this->DidDisconnectCallback = true;
 
+		this->Sock->state = EzSock::SockState::skDISCONNECTED;
+
 		LUA->ReferencePush(this->Callback_Disconnect);
 		this->PushToStack(state);
 		LUA->Call(1, 0);
@@ -226,9 +228,6 @@ void* SockWorker(void *obj){
 #endif
 			continue;
 		}
-
-		// add ref count as we're busy doing something, this is to prevent GC calls
-		sock->RefCount++;
 
 		SockEvent* ne = new SockEvent();
 
@@ -453,7 +452,6 @@ GMOD_FUNCTION(ThinkHook){
 	// too much spam :v
 	// DEBUGPRINTFUNC;
 
-
 	// When a player joins for the first time, the server gets "activated", only after that, the tick hook get's called. so we should wait with all worker operations or the callbacks won't get called
 	// and it'll mess up. This is a workaround. You can also do this in lua, but putting it here would be easier for people to use.
 	IntialTickHappend = true;
@@ -595,9 +593,6 @@ GMOD_FUNCTION(ThinkHook){
 			}
 
 			delete se;
-
-			// Balance the refcount back to normal
-			sw->RefCount--;
 		}
 	}
 
@@ -1051,6 +1046,14 @@ GMOD_FUNCTION(SOCK__GC){
 
 	s->RefCount--;
 	if (s->RefCount == 0){
+		s->Mutex.Lock();
+		bool isdone = s->CurrentWorkers == 0;
+		s->Mutex.Unlock();
+
+		if (!isdone){
+			return 0;
+		}
+
 		for (unsigned i = 0; i < AllocatedSockets.size(); i++){
 			if (AllocatedSockets[i] == s){
 				AllocatedSockets.erase(AllocatedSockets.begin() + i);
@@ -1058,6 +1061,7 @@ GMOD_FUNCTION(SOCK__GC){
 			}
 		}
 
+		DEBUGPRINT("KILLING SOCKET");
 		delete s;
 	}
 
@@ -1107,20 +1111,20 @@ GMOD_FUNCTION(PACK__GC){
 	return 0;
 }
 
-GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITESByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteByte((unsigned char)(LUA->GetNumber(2) + 128)); return 0; }
-GMOD_FUNCTION(PACK_WRITEShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteShort((short)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEUShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteUShort((unsigned short)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEFloat){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteFloat((float)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteInt((int)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEUInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteUInt((unsigned int)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEDouble){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteDouble(LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITELong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteLong((long long)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteULong((unsigned long long)LUA->GetNumber(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteString(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEStringRaw){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteStringRaw(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITELine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->WriteLine(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITESByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)(LUA->GetNumber(2) + 128)); return 0; }
+GMOD_FUNCTION(PACK_WRITEShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteShort((short)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEUShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteUShort((unsigned short)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEFloat){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteFloat((float)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteInt((int)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEUInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteUInt((unsigned int)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEDouble){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteDouble(LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITELong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteLong((long long)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteULong((unsigned long long)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteString(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEStringRaw){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteStringRaw(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITELine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteLine(LUA->GetString(2)); return 0; }
 
 GMOD_FUNCTION(PACK_READByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadByte()); return 1; }
 GMOD_FUNCTION(PACK_READSByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)((GETPACK(1))->ReadByte() - 128)); return 1; }
@@ -1136,7 +1140,7 @@ GMOD_FUNCTION(PACK_READString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET
 GMOD_FUNCTION(PACK_READStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringNT()); return 1; }
 GMOD_FUNCTION(PACK_READStringAll){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringAll()); return 1; }
 GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil("\r\n")); return 1; }
-GMOD_FUNCTION(PACK_READUntil){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
+GMOD_FUNCTION(PACK_READUntil){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
 
 GMOD_FUNCTION(PACK_InSize){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InSize); return 1; }
 GMOD_FUNCTION(PACK_InPos){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InPos); return 1; }
@@ -1149,6 +1153,17 @@ GMOD_FUNCTION(SOCK_IsValid){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); 
 GMOD_FUNCTION(SOCK_GetIP){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushString(inet_ntoa((GETSOCK(1))->Sock->addr.sin_addr)); return 1; }
 GMOD_FUNCTION(SOCK_GetPort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber(ntohs((GETSOCK(1))->Sock->addr.sin_port)); return 1; }
 GMOD_FUNCTION(SOCK_GetState){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber((GETSOCK(1))->Sock->state); return 1; }
+
+GMOD_FUNCTION(ShutdownHook){
+	DEBUGPRINTFUNC;
+
+	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
+		AllocatedSockets[i]->Reset();
+	}
+
+	ThinkHook(state);
+	return 0;
+}
 
 GMOD_MODULE_OPEN(){
 	DEBUGPRINTFUNC;
@@ -1262,13 +1277,22 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("__gc", SOCK__GC);
 
 	SocketRef = LUA->ReferenceCreate();
-
+	
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->GetField(-1, "hook");
 	LUA->GetField(-1, "Add");
 	LUA->PushString("Tick");
 	LUA->PushString("BS::TICK");
 	LUA->PushCFunction(ThinkHook);
+	LUA->Call(3, 0);
+	LUA->Pop();
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->GetField(-1, "hook");
+	LUA->GetField(-1, "Add");
+	LUA->PushString("ShutDown");
+	LUA->PushString("BS::SHUTDOWN");
+	LUA->PushCFunction(ShutdownHook);
 	LUA->Call(3, 0);
 	LUA->Pop();
 	
@@ -1281,28 +1305,6 @@ GMOD_MODULE_OPEN(){
 
 GMOD_MODULE_CLOSE(){
 	DEBUGPRINTFUNC;
-	
-	// force socket & threads shutdown on.... module shutdown
-	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
-		AllocatedSockets[i]->Reset();
-	}
-
-	// call thinkhook to handle remaining events
-	ThinkHook(state);
-
-	// reference count SHOULD be 0 now, if not, lua wil deal with it
-	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
-		SockWrapper* s = AllocatedSockets[i];
-		if (s->RefCount == 0){
-			AllocatedSockets.erase(AllocatedSockets.begin() + i);
-			delete  s;
-		}
-	}
-	
-
-
-	// reset to original state. Just to be sure.
-	AllocatedSockets.clear();
 
 	LUA->ReferenceFree(SocketRef);
 	LUA->ReferenceFree(PacketRef);
