@@ -34,6 +34,7 @@ using namespace BromScript;
 
 static int PacketRef = 0;
 static int SocketRef = 0;
+static bool IntialTickHappend = false;
 
 GMOD_FUNCTION(ThinkHook);
 class SockWrapper;
@@ -83,7 +84,7 @@ public:
 	std::vector<SockEvent*> Callbacks;
 	LockObject Mutex;
 	
-	SockWrapper(lua_State* ls, int type = IPPROTO_TCP):Sock(new EzSock()),state(ls),SocketType(type),Callback_Accept(-1), Callback_Receive(-1), Callback_Connect(-1), Callback_Send(-1), Callback_Disconnect(-1), Callback_ReceiveFrom(-1), Callback_SendTo(-1), CurrentWorkers(0), RefCount(0), DestoryWorkers(false), DidDisconnectCallback(false){}
+	SockWrapper(lua_State* ls, int type = IPPROTO_TCP) :Sock(new EzSock()), state(ls), SocketType(type), Callback_Accept(-1), Callback_Receive(-1), Callback_Connect(-1), Callback_Send(-1), Callback_Disconnect(-1), Callback_ReceiveFrom(-1), Callback_SendTo(-1), CurrentWorkers(0), RefCount(0), DestoryWorkers(false), DidDisconnectCallback(false){}
 
 	void PushToStack(lua_State* state){
 		DEBUGPRINTFUNC;
@@ -196,6 +197,16 @@ void* SockWorker(void *obj){
 			sock->CurrentWorkers--;
 			sock->Mutex.Unlock();
 			return 0;
+		}
+
+		if (!IntialTickHappend){
+#ifdef _MSC_VER
+			Sleep(1);
+#else
+			sleep(1);
+#endif
+
+			continue;
 		}
 
 		SockEvent* cur = null;
@@ -441,6 +452,11 @@ GMOD_FUNCTION(CreateSocket){
 GMOD_FUNCTION(ThinkHook){
 	// too much spam :v
 	// DEBUGPRINTFUNC;
+
+
+	// When a player joins for the first time, the server gets "activated", only after that, the tick hook get's called. so we should wait with all worker operations or the callbacks won't get called
+	// and it'll mess up. This is a workaround. You can also do this in lua, but putting it here would be easier for people to use.
+	IntialTickHappend = true;
 
 	for (size_t i = 0; i < AllocatedSockets.size(); i++){
 		SockWrapper* sw = AllocatedSockets[i];
@@ -959,8 +975,8 @@ GMOD_FUNCTION(SOCK_SetOption){
 	int ret = setsockopt(s->Sock->sock, level, option, &value, sizeof(value));
 #endif
 
-	// Should be SOCKET_ERROR, but linux does not have SOCKET_ERROR defined.
-	LUA->PushBool(ret != -1);
+	// failed == -1
+	LUA->PushNumber(ret);
 	return 1;
 }
 
@@ -1137,6 +1153,9 @@ GMOD_FUNCTION(SOCK_GetState){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET);
 GMOD_MODULE_OPEN(){
 	DEBUGPRINTFUNC;
 
+	// reset this, better save than sorry
+	IntialTickHappend = false;
+
 	LUA->CreateTable();
 		ADDFUNC("SetBlocking", SOCK_SetBlocking);
 		ADDFUNC("Connect", SOCK_Connect);
@@ -1262,7 +1281,7 @@ GMOD_MODULE_OPEN(){
 
 GMOD_MODULE_CLOSE(){
 	DEBUGPRINTFUNC;
-
+	
 	// force socket & threads shutdown on.... module shutdown
 	for (unsigned i = 0; i < AllocatedSockets.size(); i++){
 		AllocatedSockets[i]->Reset();
@@ -1279,6 +1298,7 @@ GMOD_MODULE_CLOSE(){
 			delete  s;
 		}
 	}
+	
 
 
 	// reset to original state. Just to be sure.
