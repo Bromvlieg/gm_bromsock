@@ -43,30 +43,26 @@ function HTTPRequest(url, method, postdatatbl, callback)
 	local pClient = BromSock();
 	local pPacket = BromPacket();
 	
-	local function sendline(szString)
-		pPacket:WriteLine(szString)
-		pClient:Send( pPacket, true );
-	end
-	
 	pClient:SetCallbackConnect( function( _, bConnected, szIP, iPort )
 		if (not bConnected) then
 			callback(nil, nil)
 			return;
 		end
 		
-		sendline(method .. " " .. path .. " HTTP/1.1");
-		sendline("Host: " .. host);
+		pPacket:WriteLine(method .. " " .. path .. " HTTP/1.1");
+		pPacket:WriteLine("Host: " .. host);
 		if (method:lower() == "post") then
-			sendline("Content-Type: application/x-www-form-urlencoded");
-			sendline("Content-Length: " .. #postdata);
+			pPacket:WriteLine("Content-Type: application/x-www-form-urlencoded");
+			pPacket:WriteLine("Content-Length: " .. #postdata);
 		end
 		
-		sendline("");
+		pPacket:WriteLine("");
 		
 		if (method:lower() == "post") then
-			sendline(postdata)
+			pPacket:WriteLine(postdata)
 		end
 
+		pClient:Send( pPacket, true );
 		pClient:ReceiveUntil( "\r\n\r\n" );
 	end );
 	
@@ -144,5 +140,5 @@ HTTPRequest("http://4o3.nl", "GET", nil, function(headers, body)
 		return
 	end
 	
-	print("yay content")
+	print(body)
 end)
