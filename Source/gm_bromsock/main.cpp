@@ -82,6 +82,11 @@ public:
 	
 	std::vector<SockEvent*> Todo;
 	std::vector<SockEvent*> Callbacks;
+#ifdef _MSC_VER
+	std::vector<HANDLE> Threadhandles;
+#else
+	std::vector<pthread_t> Threadhandles;
+#endif
 	LockObject Mutex;
 	
 	SockWrapper(lua_State* ls, int type = IPPROTO_TCP) :Sock(new EzSock()), state(ls), SocketType(type), Callback_Accept(-1), Callback_Receive(-1), Callback_Connect(-1), Callback_Send(-1), Callback_Disconnect(-1), Callback_ReceiveFrom(-1), Callback_SendTo(-1), CurrentWorkers(0), RefCount(0), DestoryWorkers(false), DidDisconnectCallback(false){}
@@ -101,12 +106,17 @@ public:
 
 	void CreateWorkers(){
 		#ifdef _MSC_VER
-				CreateThread(null, null, SockWorker, this, null, null);
-				CreateThread(null, null, SockWorker, this, null, null);
+			Threadhandles.push_back(CreateThread(null, null, SockWorker, this, null, null));
+			Threadhandles.push_back(CreateThread(null, null, SockWorker, this, null, null));
 		#else
-				pthread_t uselessshit;
-				pthread_create(&uselessshit, NULL, &SockWorker, this);
-				pthread_create(&uselessshit, NULL, &SockWorker, this);
+			pthread_t a;
+			pthread_t b;
+
+			pthread_create(&a, NULL, &SockWorker, this);
+			pthread_create(&b, NULL, &SockWorker, this);
+
+			Threadhandles.push_back(a);
+			Threadhandles.push_back(b);
 		#endif
 	}
 
@@ -152,6 +162,17 @@ public:
 			
 			this->Mutex.Lock();
 			isdone = this->CurrentWorkers == 0;
+			if (isdone) {
+				for (unsigned int i = 0; i < this->Threadhandles.size(); i++) {
+#ifdef _MSC_VER
+					CloseHandle(this->Threadhandles[i]);
+#else
+					pthread_join(this->Threadhandles[i], 0);
+#endif
+				}
+
+				this->Threadhandles.clear();
+			}
 			this->Mutex.Unlock();
 		}
 
@@ -938,12 +959,14 @@ GMOD_FUNCTION(SOCK_AddWorker){
 	DEBUGPRINTFUNC;
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
-	
+	SockWrapper* s = GETSOCK(1);
+
 #ifdef _MSC_VER
-		CreateThread(null, null, SockWorker, GETSOCK(1), null, null);
+		s->Threadhandles.push_back(CreateThread(null, null, SockWorker, s, null, null));
 #else
-		pthread_t uselessshit;
-		pthread_create(&uselessshit, NULL, &SockWorker, GETSOCK(1));
+		pthread_t a;
+		pthread_create(&a, NULL, &SockWorker, s);
+		s->Threadhandles.push_back(a);
 #endif
 
 	return 0;
