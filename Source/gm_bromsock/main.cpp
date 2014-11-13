@@ -1147,17 +1147,67 @@ GMOD_FUNCTION(PACK_READUInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET);
 GMOD_FUNCTION(PACK_READDouble){DEBUGPRINTFUNC;  LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadDouble()); return 1; }
 GMOD_FUNCTION(PACK_READLong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadLong()); return 1; }
 GMOD_FUNCTION(PACK_READULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadULong()); return 1; }
-GMOD_FUNCTION(PACK_READStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringNT()); return 1; }
-GMOD_FUNCTION(PACK_READStringAll){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringAll()); return 1; }
-GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil("\r\n")); return 1; }
-GMOD_FUNCTION(PACK_READUntil) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
+
+GMOD_FUNCTION(PACK_READStringNT){
+	DEBUGPRINTFUNC;
+	LUA->CheckType(1, UD_TYPE_PACKET);
+
+	unsigned int outlen = 0;
+	char* str = (GETPACK(1))->ReadStringNT(&outlen);
+	
+	LUA->PushString(str, outlen);
+
+	delete[] str;
+	return 1;
+}
+
+GMOD_FUNCTION(PACK_READStringAll){
+	DEBUGPRINTFUNC;
+	LUA->CheckType(1, UD_TYPE_PACKET);
+	
+
+	unsigned int outlen = 0;
+	char* str = (GETPACK(1))->ReadStringAll(&outlen);
+	LUA->PushString(str, outlen);
+
+	delete[] str;
+	return 1;
+}
+
+GMOD_FUNCTION(PACK_READLine){
+	DEBUGPRINTFUNC;
+	LUA->CheckType(1, UD_TYPE_PACKET);
+	
+	unsigned int outlen = 0;
+	char* str = (GETPACK(1))->ReadUntil("\r\n", &outlen);
+	LUA->PushString(str, outlen);
+
+	delete[] str;
+	return 1;
+}
+
+GMOD_FUNCTION(PACK_READUntil) {
+	DEBUGPRINTFUNC;
+	LUA->CheckType(1, UD_TYPE_PACKET);
+	LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
+
+	unsigned int outlen = 0;
+	char* str = (GETPACK(1))->ReadUntil((char*)LUA->GetString(2), &outlen);
+	LUA->PushString(str, outlen);
+	
+	delete[] str;
+	return 1;
+}
 
 GMOD_FUNCTION(PACK_READString) {
 	DEBUGPRINTFUNC;
 	LUA->CheckType(1, UD_TYPE_PACKET);
 
 	int len = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1;
-	LUA->PushString((GETPACK(1))->ReadString(len), len == -1 ? 0U : len);
+	char* str = (GETPACK(1))->ReadString(len);
+	LUA->PushString(str, len == -1 ? 0U : len);
+
+	delete[] str;
 	return 1;
 }
 

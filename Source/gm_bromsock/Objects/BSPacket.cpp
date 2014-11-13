@@ -200,7 +200,7 @@ namespace BromScript{
 		return buff;
 	}
 
-	char* Packet::ReadStringAll(){
+	char* Packet::ReadStringAll(unsigned int* outlen){
 		int len = this->InSize - this->InPos;
 		if (len == 0) return "";
 
@@ -209,10 +209,11 @@ namespace BromScript{
 		buff[len] = 0;
 
 		this->InPos += len;
+		*outlen = len;
 		return buff;
 	}
 
-	char* Packet::ReadStringNT(){
+	char* Packet::ReadStringNT(unsigned int* outlen) {
 		int startpos = this->InPos;
 
 		while(this->CanRead(1)){
@@ -229,10 +230,11 @@ namespace BromScript{
 		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
 		buff[this->InPos - startpos] = 0;
 
+		*outlen = this->InPos - startpos;
 		return buff;
 	}
 
-	char* Packet::ReadUntil(char* seq){
+	char* Packet::ReadUntil(char* seq, unsigned int* outlen){
 		unsigned int startpos = this->InPos;
 		unsigned int seqsize = strlen(seq);
 
@@ -256,6 +258,8 @@ namespace BromScript{
 		}
 
 		if (startpos == this->InPos) return "";
+
+		*outlen = this->InPos - startpos;
 
 		char* buff = new char[this->InPos - startpos + 1];
 		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
