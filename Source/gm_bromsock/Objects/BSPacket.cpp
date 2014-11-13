@@ -188,9 +188,9 @@ namespace BromScript{
 
 	char* Packet::ReadString(int len){
 		if (len == -1) len = this->ReadShort();
-		if (!this->CanRead(len)) return "";
+		if (!this->CanRead(len)) return new char[1] {0};
 
-		if (len == 0) return "";
+		if (len == 0) return new char[1] {0};
 
 		char* buff = new char[len + 1];
 		memcpy(buff, this->InBuffer + this->InPos, len);
@@ -202,7 +202,7 @@ namespace BromScript{
 
 	char* Packet::ReadStringAll(unsigned int* outlen){
 		int len = this->InSize - this->InPos;
-		if (len == 0) return "";
+		if (len == 0) return new char[1] {0};
 
 		char* buff = new char[len + 1];
 		memcpy(buff, this->InBuffer + this->InPos, len);
@@ -224,7 +224,7 @@ namespace BromScript{
 			}
 		}
 
-		if (startpos == this->InPos) return "";
+		if (startpos == this->InPos) return new char[1] {0};
 
 		char* buff = new char[this->InPos - startpos];
 		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
@@ -257,7 +257,7 @@ namespace BromScript{
 			}
 		}
 
-		if (startpos == this->InPos) return "";
+		if (startpos == this->InPos) return new char[1] {0};
 
 		*outlen = this->InPos - startpos;
 
