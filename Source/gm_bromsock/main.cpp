@@ -1147,11 +1147,19 @@ GMOD_FUNCTION(PACK_READUInt){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET);
 GMOD_FUNCTION(PACK_READDouble){DEBUGPRINTFUNC;  LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadDouble()); return 1; }
 GMOD_FUNCTION(PACK_READLong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadLong()); return 1; }
 GMOD_FUNCTION(PACK_READULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->ReadULong()); return 1; }
-GMOD_FUNCTION(PACK_READString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadString(LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1)); return 1; }
 GMOD_FUNCTION(PACK_READStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringNT()); return 1; }
 GMOD_FUNCTION(PACK_READStringAll){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadStringAll()); return 1; }
 GMOD_FUNCTION(PACK_READLine){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushString((GETPACK(1))->ReadUntil("\r\n")); return 1; }
-GMOD_FUNCTION(PACK_READUntil){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
+GMOD_FUNCTION(PACK_READUntil) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); LUA->PushString((GETPACK(1))->ReadUntil((char*)LUA->GetString(2))); return 1; }
+
+GMOD_FUNCTION(PACK_READString) {
+	DEBUGPRINTFUNC;
+	LUA->CheckType(1, UD_TYPE_PACKET);
+
+	int len = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : -1;
+	LUA->PushString((GETPACK(1))->ReadString(len), len == -1 ? 0U : len);
+	return 1;
+}
 
 GMOD_FUNCTION(PACK_InSize){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InSize); return 1; }
 GMOD_FUNCTION(PACK_InPos){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushNumber((double)(GETPACK(1))->InPos); return 1; }
