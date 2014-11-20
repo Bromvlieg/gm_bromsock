@@ -1203,7 +1203,7 @@ GMOD_FUNCTION(PACK_READLine){
 	LUA->CheckType(1, UD_TYPE_PACKET);
 	
 	unsigned int outlen = 0;
-	char* str = (GETPACK(1))->ReadUntil("\r\n", &outlen);
+	char* str = (GETPACK(1))->ReadUntil("\r\n", 2, &outlen);
 	LUA->PushString(str, outlen);
 
 	delete[] str;
@@ -1215,8 +1215,12 @@ GMOD_FUNCTION(PACK_READUntil) {
 	LUA->CheckType(1, UD_TYPE_PACKET);
 	LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
+
+	unsigned int lualen = 0;
+	char* luastr = (char*)LUA->GetString(2, &lualen);
+
 	unsigned int outlen = 0;
-	char* str = (GETPACK(1))->ReadUntil((char*)LUA->GetString(2), &outlen);
+	char* str = (GETPACK(1))->ReadUntil(luastr, lualen, &outlen);
 	LUA->PushString(str, outlen);
 	
 	delete[] str;
