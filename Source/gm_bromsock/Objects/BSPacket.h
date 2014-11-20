@@ -10,6 +10,11 @@
 namespace BromScript{
 	class Packet{
 	public:
+		// 0 == system endian, defaults to this
+		// 1 == big endian
+		// 2 == little endian
+		unsigned char EndianType;
+
 		int RefCount;
 		bool Valid;
 		EzSock* Sock;

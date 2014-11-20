@@ -1,4 +1,5 @@
 #include "BSPacket.h"
+#include <stdint.h>
 #include <stdio.h>
 
 #ifndef _MSC_VER
@@ -6,6 +7,58 @@
 #endif
 
 namespace BromScript{
+	uint16_t swap_uint16(uint16_t val) { return (val << 8) | (val >> 8); }
+	int16_t swap_int16(int16_t val) { return (val << 8) | ((val >> 8) & 0xFF); }
+	
+	uint32_t swap_uint32(uint32_t val) { val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF); return (val << 16) | (val >> 16); }
+	int32_t swap_int32(int32_t val) { val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF); return (val << 16) | ((val >> 16) & 0xFFFF); }
+
+	int64_t swap_int64(int64_t val) {
+		val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
+		val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
+		return (val << 32) | ((val >> 32) & 0xFFFFFFFFULL);
+	}
+
+	uint64_t swap_uint64(uint64_t val) {
+		val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
+		val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
+		return (val << 32) | (val >> 32);
+	}
+
+	float swap_float(const float inFloat) {
+		float retVal;
+		char *floatToConvert = (char*)& inFloat;
+		char *returnFloat = (char*)& retVal;
+
+		for (int i = 0; i < 4; i++) {
+			returnFloat[i] = floatToConvert[3 - i];
+		}
+
+		return retVal;
+	}
+
+	double swap_double(const double inFloat) {
+		float retVal;
+		char *floatToConvert = (char*)& inFloat;
+		char *returnFloat = (char*)& retVal;
+
+		for (int i = 0; i < 4; i++) {
+			returnFloat[i] = floatToConvert[3 - i];
+		}
+
+		return retVal;
+	}
+
+	int is_big_endian(void) {
+		// compiler magic, GCC makes the result of this a constant, moar speeds
+		union {
+			uint32_t i;
+			char c[4];
+		} bint = {0x01020304};
+
+		return bint.c[0] == 1;
+	}
+
 	Packet::Packet(){
 		this->Valid = false;
 
@@ -18,6 +71,8 @@ namespace BromScript{
 		this->OutSize = 0;
 		this->OutBuffer = null;
 		this->InBuffer = null;
+
+		this->EndianType = 0;
 	}
 
 	Packet::Packet(EzSock* sock){
@@ -32,6 +87,8 @@ namespace BromScript{
 		this->OutSize = 0;
 		this->OutBuffer = null;
 		this->InBuffer = null;
+
+		this->EndianType = 0;
 	}
 
 	Packet::~Packet(){
@@ -113,6 +170,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 2);
 		this->InPos += 2;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_int16(ret);
 		return ret;
 	}
 
@@ -123,6 +181,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 2);
 		this->InPos += 2;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_uint16(ret);
 		return ret;
 	}
 
@@ -133,6 +192,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_float(ret);
 		return ret;
 	}
 
@@ -143,6 +203,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_double(ret);
 		return ret;
 	}
 
@@ -153,6 +214,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_int32(ret);
 		return ret;
 	}
 
@@ -163,6 +225,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_uint32(ret);
 		return ret;
 	}
 
@@ -173,6 +236,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_int64(ret);
 		return ret;
 	}
 
@@ -183,6 +247,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_uint64(ret);
 		return ret;
 	}
 
@@ -383,48 +448,64 @@ namespace BromScript{
 	}
 
 	void Packet::WriteShort(short num){
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_int16(num);
+
 		this->CheckSpaceOut(2);
 		memcpy(this->OutBuffer + this->OutPos, &num, 2);
 		this->OutPos += 2;
 	}
 
-	void Packet::WriteUShort(unsigned short num){
+	void Packet::WriteUShort(unsigned short num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_uint16(num);
+
 		this->CheckSpaceOut(2);
 		memcpy(this->OutBuffer + this->OutPos, &num, 2);
 		this->OutPos += 2;
 	}
 
-	void Packet::WriteInt(int num){
+	void Packet::WriteInt(int num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_int32(num);
+
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
 		this->OutPos += 4;
 	}
 
-	void Packet::WriteUInt(unsigned int num){
+	void Packet::WriteUInt(unsigned int num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_uint32(num);
+
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
 		this->OutPos += 4;
 	}
 
-	void Packet::WriteLong(long long num){
+	void Packet::WriteLong(long long num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_int64(num);
+
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
 		this->OutPos += 8;
 	}
 
-	void Packet::WriteULong(unsigned long long num){
+	void Packet::WriteULong(unsigned long long num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_uint64(num);
+
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
 		this->OutPos += 8;
 	}
 
-	void Packet::WriteFloat(float num){
+	void Packet::WriteFloat(float num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_float(num);
+
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
 		this->OutPos += 4;
 	}
 
-	void Packet::WriteDouble(double num){
+	void Packet::WriteDouble(double num) {
+		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_double(num);
+
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
 		this->OutPos += 8;

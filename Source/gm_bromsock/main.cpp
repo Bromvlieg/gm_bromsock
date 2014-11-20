@@ -1134,7 +1134,8 @@ GMOD_FUNCTION(PACK__GC){
 	return 0;
 }
 
-GMOD_FUNCTION(PACK_WRITEByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
+GMOD_FUNCTION(PACK_SetEndian) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->EndianType = (unsigned char)LUA->GetNumber(2); return 0; }
+GMOD_FUNCTION(PACK_WRITEByte) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITESByte){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteByte((unsigned char)(LUA->GetNumber(2) + 128)); return 0; }
 GMOD_FUNCTION(PACK_WRITEShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteShort((short)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITEUShort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteUShort((unsigned short)LUA->GetNumber(2)); return 0; }
@@ -1293,6 +1294,7 @@ GMOD_MODULE_OPEN(){
 	int socktableref = LUA->ReferenceCreate();
 
 	LUA->CreateTable();
+		ADDFUNC("SetEndian", PACK_SetEndian);
 		ADDFUNC("WriteByte", PACK_WRITEByte);
 		ADDFUNC("WriteSByte", PACK_WRITESByte);
 		ADDFUNC("WriteShort", PACK_WRITEShort);
@@ -1347,6 +1349,21 @@ GMOD_MODULE_OPEN(){
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->PushString("BROMSOCK_UDP");
 	LUA->PushNumber(IPPROTO_UDP);
+	LUA->SetTable(-3);
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushString("BROMSOCK_ENDIAN_SYSTEM");
+	LUA->PushNumber(0);
+	LUA->SetTable(-3);
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushString("BROMSOCK_ENDIAN_BIG");
+	LUA->PushNumber(1);
+	LUA->SetTable(-3);
+
+	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushString("BROMSOCK_ENDIAN_LITTLE");
+	LUA->PushNumber(2);
 	LUA->SetTable(-3);
 
 	LUA->CreateTable();
