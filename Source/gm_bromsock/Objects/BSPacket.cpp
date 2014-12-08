@@ -49,14 +49,14 @@ namespace BromScript{
 		return retVal;
 	}
 
-	int is_big_endian(void) {
+	int get_local_endian(void) {
 		// compiler magic, GCC makes the result of this a constant, moar speeds
 		union {
 			uint32_t i;
 			char c[4];
-		} bint = {0x01020304};
+		} bint = {0x01000002}; // outcome: 0x01 == big endian, 0x02 == little endian
 
-		return bint.c[0] == 1;
+		return bint.c[0];
 	}
 
 	Packet::Packet(){
@@ -170,7 +170,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 2);
 		this->InPos += 2;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_int16(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_int16(ret);
 		return ret;
 	}
 
@@ -181,7 +181,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 2);
 		this->InPos += 2;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_uint16(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_uint16(ret);
 		return ret;
 	}
 
@@ -192,7 +192,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_float(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_float(ret);
 		return ret;
 	}
 
@@ -203,7 +203,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_double(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_double(ret);
 		return ret;
 	}
 
@@ -214,7 +214,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_int32(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_int32(ret);
 		return ret;
 	}
 
@@ -225,7 +225,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_uint32(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_uint32(ret);
 		return ret;
 	}
 
@@ -236,7 +236,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_int64(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_int64(ret);
 		return ret;
 	}
 
@@ -247,7 +247,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) ret = swap_uint64(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_uint64(ret);
 		return ret;
 	}
 
@@ -447,7 +447,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteShort(short num){
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_int16(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_int16(num);
 
 		this->CheckSpaceOut(2);
 		memcpy(this->OutBuffer + this->OutPos, &num, 2);
@@ -455,7 +455,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteUShort(unsigned short num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_uint16(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_uint16(num);
 
 		this->CheckSpaceOut(2);
 		memcpy(this->OutBuffer + this->OutPos, &num, 2);
@@ -463,7 +463,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteInt(int num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_int32(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_int32(num);
 
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
@@ -471,7 +471,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteUInt(unsigned int num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_uint32(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_uint32(num);
 
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
@@ -479,7 +479,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteLong(long long num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_int64(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_int64(num);
 
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
@@ -487,7 +487,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteULong(unsigned long long num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_uint64(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_uint64(num);
 
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
@@ -495,7 +495,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteFloat(float num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_float(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_float(num);
 
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
@@ -503,7 +503,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteDouble(double num) {
-		if (this->EndianType != 0 && this->EndianType != is_big_endian()) num = swap_double(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_double(num);
 
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
@@ -549,7 +549,10 @@ namespace BromScript{
 	}
 
 	void Packet::Send(){
-		this->Sock->SendRaw((unsigned char*)&this->OutPos, 4);
+		unsigned int outsize = this->OutPos;
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) outsize = swap_int32(outsize);
+
+		this->Sock->SendRaw((unsigned char*)&outsize, 4);
 		this->Sock->SendRaw(this->OutBuffer, this->OutPos);
 
 		delete[] this->OutBuffer;
