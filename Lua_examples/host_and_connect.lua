@@ -27,7 +27,7 @@ if SERVER then
 			-- normaly you'd want to call Receive again to read the next packet. However, we know that the client ain't going to send more, so fuck it.
 			-- theres only one way to see if a client disconnected, and that's when a error occurs while sending/receiving.
 			-- this is why most applications have a disconnect packet in their code, so that the client informs the server that he exited cleanly. There's no other way.
-			-- We set a timeout, so let's be stupid and hope there's another packet incoBSing. It'll timeout and disconnect.
+			-- We set a timeout, so let's be stupid and hope there's another packet incomming. It'll timeout and disconnect.
 			sock:Receive()
 		end)
 		
@@ -35,7 +35,7 @@ if SERVER then
 			print("[BS:S] Disconnected:", sock)
 		end)
 		
-		clientsock:SetTimeout(1000) -- timeout send/recv coBSands in 1 second. This will generate a Disconnect event if you're using callbacks
+		clientsock:SetTimeout(1000) -- timeout send/recv commands in 1 second. This will generate a Disconnect event if you're using callbacks
 		
 		clientsock:Receive()
 		
@@ -63,8 +63,6 @@ if CLIENT then
 		packet_client:WriteInt(13000)
 		client:Send(packet_client)
 		
-		-- copy from Send callback, which is currenly non functional.
-		print("[BS:C] Sent:", "", sock, datasent)
 		-- we expect a response form the server after he received this, so instead of calling Receive at the connect callback, we do it here.
 		client:Receive()
 	end)
