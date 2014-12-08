@@ -7,46 +7,31 @@
 #endif
 
 namespace BromScript{
-	uint16_t swap_uint16(uint16_t val) { return (val << 8) | (val >> 8); }
-	int16_t swap_int16(int16_t val) { return (val << 8) | ((val >> 8) & 0xFF); }
-	
-	uint32_t swap_uint32(uint32_t val) { val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF); return (val << 16) | (val >> 16); }
-	int32_t swap_int32(int32_t val) { val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF); return (val << 16) | ((val >> 16) & 0xFFFF); }
-
-	int64_t swap_int64(int64_t val) {
-		val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
-		val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
-		return (val << 32) | ((val >> 32) & 0xFFFFFFFFULL);
-	}
-
-	uint64_t swap_uint64(uint64_t val) {
-		val = ((val << 8) & 0xFF00FF00FF00FF00ULL) | ((val >> 8) & 0x00FF00FF00FF00FFULL);
-		val = ((val << 16) & 0xFFFF0000FFFF0000ULL) | ((val >> 16) & 0x0000FFFF0000FFFFULL);
-		return (val << 32) | (val >> 32);
-	}
-
-	float swap_float(const float inFloat) {
-		float retVal;
-		char *floatToConvert = (char*)& inFloat;
-		char *returnFloat = (char*)& retVal;
-
-		for (int i = 0; i < 4; i++) {
-			returnFloat[i] = floatToConvert[3 - i];
+	void swap_2(void* source) {
+		char ret[2];
+		for (int i = 0; i < 2; i++) {
+			ret[i] = ((char*)source)[1 - i];
 		}
 
-		return retVal;
+		memcpy(source, ret, 2);
 	}
 
-	double swap_double(const double inFloat) {
-		float retVal;
-		char *floatToConvert = (char*)& inFloat;
-		char *returnFloat = (char*)& retVal;
-
+	void swap_4(void* source) {
+		char ret[4];
 		for (int i = 0; i < 4; i++) {
-			returnFloat[i] = floatToConvert[3 - i];
+			ret[i] = ((char*)source)[3 - i];
 		}
 
-		return retVal;
+		memcpy(source, ret, 4);
+	}
+
+	void swap_8(void* source) {
+		char ret[8];
+		for (int i = 0; i < 8; i++) {
+			ret[i] = ((char*)source)[7 - i];
+		}
+
+		memcpy(source, ret, 8);
 	}
 
 	int get_local_endian(void) {
@@ -170,7 +155,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 2);
 		this->InPos += 2;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_int16(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_2(&ret);
 		return ret;
 	}
 
@@ -181,7 +166,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 2);
 		this->InPos += 2;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_uint16(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_2(&ret);
 		return ret;
 	}
 
@@ -192,7 +177,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_float(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&ret);
 		return ret;
 	}
 
@@ -203,7 +188,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_double(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_8(&ret);
 		return ret;
 	}
 
@@ -214,7 +199,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_int32(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&ret);
 		return ret;
 	}
 
@@ -225,7 +210,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 4);
 		this->InPos += 4;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_uint32(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&ret);
 		return ret;
 	}
 
@@ -236,7 +221,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_int64(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_8(&ret);
 		return ret;
 	}
 
@@ -247,7 +232,7 @@ namespace BromScript{
 		memcpy(&ret, this->InBuffer + this->InPos, 8);
 		this->InPos += 8;
 
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) ret = swap_uint64(ret);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_8(&ret);
 		return ret;
 	}
 
@@ -447,7 +432,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteShort(short num){
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_int16(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_2(&num);
 
 		this->CheckSpaceOut(2);
 		memcpy(this->OutBuffer + this->OutPos, &num, 2);
@@ -455,7 +440,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteUShort(unsigned short num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_uint16(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_2(&num);
 
 		this->CheckSpaceOut(2);
 		memcpy(this->OutBuffer + this->OutPos, &num, 2);
@@ -463,7 +448,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteInt(int num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_int32(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&num);
 
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
@@ -471,7 +456,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteUInt(unsigned int num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_uint32(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&num);
 
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
@@ -479,7 +464,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteLong(long long num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_int64(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_8(&num);
 
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
@@ -487,7 +472,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteULong(unsigned long long num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_uint64(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_8(&num);
 
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
@@ -495,7 +480,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteFloat(float num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_float(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&num);
 
 		this->CheckSpaceOut(4);
 		memcpy(this->OutBuffer + this->OutPos, &num, 4);
@@ -503,7 +488,7 @@ namespace BromScript{
 	}
 
 	void Packet::WriteDouble(double num) {
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) num = swap_double(num);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_8(&num);
 
 		this->CheckSpaceOut(8);
 		memcpy(this->OutBuffer + this->OutPos, &num, 8);
@@ -550,7 +535,7 @@ namespace BromScript{
 
 	void Packet::Send(){
 		unsigned int outsize = this->OutPos;
-		if (this->EndianType != 0 && this->EndianType != get_local_endian()) outsize = swap_int32(outsize);
+		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&outsize);
 
 		this->Sock->SendRaw((unsigned char*)&outsize, 4);
 		this->Sock->SendRaw(this->OutBuffer, this->OutPos);
