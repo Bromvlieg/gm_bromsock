@@ -77,9 +77,6 @@ if CLIENT then
 
 	client:SetCallbackSend(function(sock, datasent)
 		print("[BS:C] Sent:", "", sock, datasent)
-		
-		-- we expect a response form the server after he received this, so instead of calling Receive at the connect callback, we do it here.
-		client:Receive()
 	end)
 	
 
