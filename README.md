@@ -11,6 +11,6 @@ Facepunch forum thread: http://facepunch.com/showthread.php?t=1393640
 *	[UDP](Lua_examples/udp.lua)
 *	[Host and Connect](Lua_examples/host_and_connect.lua)
 
-##Licence
+##License
 This is distributed under the MIT license.
 [(Read More)](LICENSE)
