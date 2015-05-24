@@ -18,8 +18,8 @@ clean:
 	rm -f obj/*.o obj/Objects/*.o gmsv_bromsock_linux.so
 
 release:
-	mv gmsv_bromsock_linux.so ../../Builds/gmsv_bromsock_linux.dll
+	cp gmsv_bromsock_linux.so ../../Builds/gmsv_bromsock_linux.dll
 
 install:
-	cp gmsv_bromsock_linux.so ~/.steam/steam/SteamApps/common/GarrysMod/garrysmod/lua/bin/gmsv_bromsock_linux.dll
-	cp gmsv_bromsock_linux.so ~/.steam/steam/SteamApps/common/GarrysMod/garrysmod/lua/bin/gmcl_bromsock_linux.dll
+	cp gmsv_bromsock_linux.so ~/Servers/GarrysMod/garrysmod/lua/bin/gmsv_bromsock_linux.dll
+	cp gmsv_bromsock_linux.so ~/Servers/GarrysMod/garrysmod/lua/bin/gmcl_bromsock_linux.dll
