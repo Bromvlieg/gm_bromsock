@@ -59,7 +59,7 @@ namespace BromScript{
 		float ReadFloat();
 		double ReadDouble();
 		char* ReadString(int len = -1);
-		char* ReadUntil(char* seq, unsigned int seqsize, unsigned int* outlen);
+		char* ReadUntil(const char* seq, unsigned int seqsize, unsigned int* outlen);
 		char* ReadStringNT(unsigned int* outlen);
 		char* ReadStringAll(unsigned int* outlen);
 		
