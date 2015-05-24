@@ -280,7 +280,7 @@ namespace BromScript{
 		return buff;
 	}
 
-	char* Packet::ReadUntil(char* seq, unsigned int seqsize, unsigned int* outlen) {
+	char* Packet::ReadUntil(const char* seq, unsigned int seqsize, unsigned int* outlen) {
 		unsigned int startpos = this->InPos;
 
 		while (this->CanRead(seqsize)) {
