@@ -50,7 +50,7 @@ namespace BromScript{
 		bool create();
 		bool create(int Protocol);
 		bool create(int Protocol, int Type);
-		bool bind(unsigned short port);
+		bool bind(const char* ip, unsigned short port);
 		bool listen();
 		bool accept(EzSock* socket);
 		int connect(const char* host, unsigned short port);

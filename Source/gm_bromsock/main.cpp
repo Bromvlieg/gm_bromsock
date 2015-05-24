@@ -130,6 +130,9 @@ public:
 
 		delete this->Sock;
 		this->Sock = new EzSock();
+
+		// we have a new sock now, so reset this flag
+		this->DidDisconnectCallback = false;
 	}
 
 	void CallDisconnect(){
@@ -400,18 +403,7 @@ void* SockWorker(void *obj){
 				memcpy(&servaddr.sin_addr, lookup->h_addr_list[0], lookup->h_length);
 				servaddr.sin_port = htons(port);
 
-				int curpos = 0;
-				while (curpos != outpos){
-					int ret = sendto(sock->Sock->sock, (char*)outbuffer + curpos, outpos - curpos, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
-
-					if (ret <= 0){
-						delete lookup;
-						lookup = null;
-						break;
-					}
-
-					curpos += ret;
-				}
+				sendto(sock->Sock->sock, (char*)outbuffer, outpos, 0, (struct sockaddr*)&servaddr, sizeof(servaddr));
 			}
 
 			delete[] outbuffer;
@@ -652,35 +644,56 @@ GMOD_FUNCTION(SOCK_Connect){
 	}
 }
 
-GMOD_FUNCTION(SOCK_Listen){
+GMOD_FUNCTION(SOCK_Listen) {
 	DEBUGPRINTFUNC;
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
-	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+
+	const char* ip = "0.0.0.0";
+	unsigned short port;
+
+	if (LUA->IsType(3, GarrysMod::Lua::Type::NUMBER) && LUA->IsType(2, GarrysMod::Lua::Type::STRING)) {
+		ip = LUA->GetString(2);
+		port = (unsigned short)LUA->GetNumber(3);
+	} else if (LUA->IsType(2, GarrysMod::Lua::Type::NUMBER)) {
+		port = (unsigned short)LUA->GetNumber(2);
+	} else {
+		LUA->PushBool((GETSOCK(1))->Sock->listen());
+		return 1;
+	}
 
 	SockWrapper* s = GETSOCK(1);
 	s->Sock->create(s->SocketType);
 
-	bool ret = s->Sock->bind((unsigned short)LUA->GetNumber(2)) && s->Sock->listen();
+	bool ret = s->Sock->bind(ip, port) && s->Sock->listen();
 	if (ret) s->CreateWorkers();
 
-	LUA->PushBool(ret);
 	return 1;
 }
 
-GMOD_FUNCTION(SOCK_Bind){
+GMOD_FUNCTION(SOCK_Bind) {
 	DEBUGPRINTFUNC;
 
 	LUA->CheckType(1, UD_TYPE_SOCKET);
-	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+
+	const char* ip = "0.0.0.0";
+	unsigned short port;
+
+	if (LUA->IsType(3, GarrysMod::Lua::Type::NUMBER) && LUA->IsType(2, GarrysMod::Lua::Type::STRING)) {
+		ip = LUA->GetString(2);
+		port = (unsigned short)LUA->GetNumber(3);
+	} else if (LUA->IsType(2, GarrysMod::Lua::Type::NUMBER)) {
+		port = (unsigned short)LUA->GetNumber(2);
+	} else {
+		LUA->ThrowError("Expected (string ip, number port), or just a number port");
+	}
 
 	SockWrapper* s = GETSOCK(1);
 	s->Sock->create(s->SocketType);
 
-	LUA->PushBool(s->Sock->bind((unsigned short)LUA->GetNumber(2)));
+	LUA->PushBool(s->Sock->bind(ip, port));
 	return 1;
 }
-
 
 GMOD_FUNCTION(SOCK_SetBlocking){
 	DEBUGPRINTFUNC;
@@ -1188,7 +1201,6 @@ GMOD_FUNCTION(PACK_READStringNT){
 GMOD_FUNCTION(PACK_READStringAll){
 	DEBUGPRINTFUNC;
 	LUA->CheckType(1, UD_TYPE_PACKET);
-	
 
 	unsigned int outlen = 0;
 	char* str = (GETPACK(1))->ReadStringAll(&outlen);
@@ -1274,8 +1286,8 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("Close", SOCK_Disconnect);
 		ADDFUNC("Create", SOCK_Create);
 		ADDFUNC("Disconnect", SOCK_Disconnect);
-		ADDFUNC("Listen", SOCK_Listen);
 		ADDFUNC("Bind", SOCK_Bind);
+		ADDFUNC("Listen", SOCK_Listen);
 		ADDFUNC("Send", SOCK_Send);
 		ADDFUNC("SendTo", SOCK_SendTo);
 		ADDFUNC("Accept", SOCK_Accept);

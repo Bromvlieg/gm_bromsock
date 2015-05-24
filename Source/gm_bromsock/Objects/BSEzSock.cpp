@@ -81,11 +81,11 @@ namespace BromScript{
 		return sock > SOCKET_NONE;
 	}
 
-	bool EzSock::bind(unsigned short port){
+	bool EzSock::bind(const char* ip, unsigned short port){
 		if(!check()) return false;
 
 		addr.sin_family = AF_INET;
-		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		addr.sin_addr.s_addr = inet_addr(ip);
 		addr.sin_port = htons(port);
 		lastCode = ::bind(sock,(struct sockaddr*)&addr, sizeof(addr));
 

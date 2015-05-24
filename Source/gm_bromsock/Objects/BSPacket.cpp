@@ -113,7 +113,7 @@ namespace BromScript{
 
 	void Packet::CheckSpaceIn(int needed){
 		if (this->InPos + needed >= this->InSize){
-			this->AllocateMoreSpaceIn(needed);
+			this->AllocateMoreSpaceIn(needed - (this->InSize - this->InPos));
 		}
 	}
 
@@ -266,17 +266,13 @@ namespace BromScript{
 	char* Packet::ReadStringNT(unsigned int* outlen) {
 		int startpos = this->InPos;
 
-		while(this->CanRead(1)){
-			this->InPos++;
-
-			if (this->InBuffer[this->InPos] == null){
-				break;
-			}
+		while (this->CanRead(1) && this->InBuffer[this->InPos++] != null) {
+			// a buttload of nothing
 		}
 
 		if (startpos == this->InPos) return new char[1] {0};
 
-		char* buff = new char[this->InPos - startpos];
+		char* buff = new char[this->InPos - startpos + 1];
 		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
 		buff[this->InPos - startpos] = 0;
 
@@ -287,23 +283,21 @@ namespace BromScript{
 	char* Packet::ReadUntil(char* seq, unsigned int seqsize, unsigned int* outlen) {
 		unsigned int startpos = this->InPos;
 
-		while(this->CanRead(1)){
-			this->InPos++;
-
-			if (this->InPos - startpos >= seqsize){
-				bool done = true;
-
-				for (unsigned int i = 0; i < seqsize; i++){
-					if (this->InBuffer[this->InPos - seqsize + i] != seq[i]){
-						done = false;
-						break;
-					}
-				}
-
-				if (done){
+		while (this->CanRead(seqsize)) {
+			bool done = true;
+			
+			for (unsigned int i = 0; i < seqsize; i++){
+				if (this->InBuffer[this->InPos + i] != seq[i]){
+					done = false;
 					break;
 				}
 			}
+
+			if (done){
+				break;
+			}
+
+			this->InPos++;
 		}
 
 		if (startpos == this->InPos) return new char[1] {0};
