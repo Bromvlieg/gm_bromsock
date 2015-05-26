@@ -341,10 +341,10 @@ void* SockWorker(void *obj){
 				delete[] buffer;
 
 				ne->data1 = p;
-				ne->data2 = clientaddr;
 			}
 
 			ne->Type = EventType::ReceiveFrom;
+			ne->data2 = clientaddr;
 
 			if (cur->data1 != null) delete (int*)cur->data1;
 		}break;
@@ -516,7 +516,7 @@ GMOD_FUNCTION(ThinkHook){
 					sw->PushToStack(state);
 					nsw->PushToStack(state);
 					CALLLUAFUNC(2);
-				}else{
+				} else {
 					sw->CallDisconnect();
 				}
 			}break;
@@ -530,8 +530,7 @@ GMOD_FUNCTION(ThinkHook){
 					sw->PushToStack(state);
 					LUA->PushNumber((double)*size);
 					CALLLUAFUNC(2);
-				}
-				else{
+				} else{
 					sw->CallDisconnect();
 				}
 
@@ -575,8 +574,7 @@ GMOD_FUNCTION(ThinkHook){
 					p->RefCount++;
 
 					CALLLUAFUNC(2);
-				}
-				else{
+				} else{
 					sw->CallDisconnect();
 				}
 			}break;
@@ -585,7 +583,7 @@ GMOD_FUNCTION(ThinkHook){
 				Packet* p = (Packet*)se->data1;
 				sockaddr_in* caddr = (sockaddr_in*)se->data2;
 
-				if (p != null){
+				if (p != null) {
 					LUA->ReferencePush(sw->Callback_ReceiveFrom);
 					sw->PushToStack(state);
 
@@ -599,9 +597,17 @@ GMOD_FUNCTION(ThinkHook){
 					LUA->PushString(inet_ntoa(caddr->sin_addr));
 					LUA->PushNumber(ntohs(caddr->sin_port));
 					CALLLUAFUNC(4);
+				} else {
+					LUA->ReferencePush(sw->Callback_ReceiveFrom);
+					sw->PushToStack(state);
 
-					delete caddr;
+					LUA->PushNil();
+					LUA->PushString(inet_ntoa(caddr->sin_addr));
+					LUA->PushNumber(ntohs(caddr->sin_port));
+					CALLLUAFUNC(4);
 				}
+
+				delete caddr;
 			}break;
 			}
 
