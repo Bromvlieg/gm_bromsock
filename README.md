@@ -47,6 +47,7 @@ WriteDouble(num)
 WriteLong(num)
 WriteULong(num)
 WritePacket(packet) -- writes the outbuffer of the packet to the current packet
+
 ReadString([length]) -- returns string (reads a short as length index if you don't supply your own length)
 ReadStringNT() -- returns string (reads until a 0 byte)
 ReadStringAll() -- returns string (reads the entire remains of the packet as a string and returns this)
@@ -62,6 +63,7 @@ ReadUInt()
 ReadDouble()
 ReadLong()
 ReadULong()
+
 InPos() -- returns the position of the In buffer
 InSize() -- returns the size of the In buffer
 OutPos()
