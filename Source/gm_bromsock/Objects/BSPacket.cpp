@@ -61,7 +61,7 @@ namespace BromScript{
 	}
 
 	Packet::Packet(EzSock* sock){
-		this->Valid = true;
+		this->Valid = sock != null;
 		
 		this->RefCount = 0;
 		this->Sock = sock;

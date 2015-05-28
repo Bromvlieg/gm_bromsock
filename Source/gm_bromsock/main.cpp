@@ -1165,8 +1165,9 @@ GMOD_FUNCTION(PACK_WRITEDouble){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKE
 GMOD_FUNCTION(PACK_WRITELong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteLong((long long)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITEULong){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER); (GETPACK(1))->WriteULong((unsigned long long)LUA->GetNumber(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITEString){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteString(LUA->GetString(2)); return 0; }
-GMOD_FUNCTION(PACK_WRITEStringNT){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEStringNT) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteStringNT(LUA->GetString(2)); return 0; }
 GMOD_FUNCTION(PACK_WRITELine) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, GarrysMod::Lua::Type::STRING); (GETPACK(1))->WriteLine(LUA->GetString(2)); return 0; }
+GMOD_FUNCTION(PACK_WRITEPacket) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->CheckType(2, UD_TYPE_PACKET); if ((GETPACK(2))->OutBuffer == null) return 0; (GETPACK(1))->WriteBytes((GETPACK(2))->OutBuffer, (GETPACK(2))->OutPos, false); return 0; }
 
 GMOD_FUNCTION(PACK_WRITEStringRaw) {
 	DEBUGPRINTFUNC;
@@ -1269,6 +1270,46 @@ GMOD_FUNCTION(SOCK_GetIP){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LU
 GMOD_FUNCTION(SOCK_GetPort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber(ntohs((GETSOCK(1))->Sock->addr.sin_port)); return 1; }
 GMOD_FUNCTION(SOCK_GetState){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber((GETSOCK(1))->Sock->state); return 1; }
 
+GMOD_FUNCTION(PACK_Copy) {
+	DEBUGPRINTFUNC;
+	LUA->CheckType(1, UD_TYPE_PACKET);
+
+	Packet* source = GETPACK(1);
+
+	Packet* p = new Packet(source->Sock);
+
+	GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
+	ud->data = p;
+	ud->type = UD_TYPE_PACKET;
+
+	LUA->ReferencePush(PacketRef);
+	LUA->SetMetaTable(-2);
+
+	p->RefCount++;
+
+	if (source->OutBuffer != null) {
+		// Not sure if we should copy the entire out buffer (including additional allocated space)
+		// or just the actual data, I think the actual data is more efficient for normal use.
+
+		// if you'd like to have the space too, use OutSize, rather than OutPos
+		p->OutBuffer = new unsigned char[source->OutPos];
+		memcpy(p->OutBuffer, source->OutBuffer, source->OutPos);
+
+		p->OutPos = source->OutPos;
+		p->OutSize = source->OutPos; // this one too
+	}
+
+	if (source->InBuffer != null) {
+		p->InBuffer = new unsigned char[source->InSize];
+		memcpy(p->InBuffer, source->InBuffer, source->InSize);
+
+		p->InPos = source->InPos;
+		p->InSize = source->InSize;
+	}
+
+	return 1;
+}
+
 GMOD_FUNCTION(ShutdownHook){
 	DEBUGPRINTFUNC;
 
@@ -1331,6 +1372,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("WriteStringNT", PACK_WRITEStringNT);
 		ADDFUNC("WriteStringRaw", PACK_WRITEStringRaw);
 		ADDFUNC("WriteLine", PACK_WRITELine);
+		ADDFUNC("WritePacket", PACK_WRITEPacket);
 		ADDFUNC("ReadByte", PACK_READByte);
 		ADDFUNC("ReadSByte", PACK_READSByte);
 		ADDFUNC("ReadShort", PACK_READShort);
@@ -1350,6 +1392,7 @@ GMOD_MODULE_OPEN(){
 		ADDFUNC("InPos", PACK_InPos);
 		ADDFUNC("OutSize", PACK_OutSize);
 		ADDFUNC("OutPos", PACK_OutPos);
+		ADDFUNC("Copy", PACK_Copy);
 		ADDFUNC("Clear", PACK_CLEAR);
 	int packtableref = LUA->ReferenceCreate();
 
