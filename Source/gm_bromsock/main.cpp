@@ -160,7 +160,10 @@ public:
 #ifdef _MSC_VER
 			Sleep(1);
 #else
-			sleep(1);
+			struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 1000000;
+			nanosleep(&ts, NULL);
 #endif
 			
 			this->Mutex.Lock();
@@ -229,7 +232,10 @@ void* SockWorker(void *obj){
 #ifdef _MSC_VER
 			Sleep(1);
 #else
-			sleep(1);
+			struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 1000000;
+			nanosleep(&ts, NULL);
 #endif
 
 			continue;
@@ -248,7 +254,10 @@ void* SockWorker(void *obj){
 #ifdef _MSC_VER
 			Sleep(1);
 #else
-			sleep(1);
+			struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 1000000;
+			nanosleep(&ts, NULL);
 #endif
 			continue;
 		}
