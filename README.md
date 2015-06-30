@@ -66,8 +66,13 @@ ReadULong()
 
 InPos() -- returns the position of the In buffer
 InSize() -- returns the size of the In buffer
-OutPos()
-OutSize()
+
+-- About the buffer, the entire buffer is bigger than your packet, this is because it pre-allocates space for you
+-- to speed up the writing process, this can be a bit confusing but if you think about it, it makes sense.
+OutPos() -- the current location of the out buffer, also being the size of your writen packet
+OutSize() -- the size of the entire out buffer
+-- So if you want to know the size of YOUR data in the out buffer, use OutPos() and not OutSize()
+
 Clear() -- empties the inbuffer and outbuffer
 Copy() -- returns a copy of the current packet
 ```
