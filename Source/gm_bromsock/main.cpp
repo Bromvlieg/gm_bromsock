@@ -378,7 +378,7 @@ void* SockWorker(void *obj){
 				while (curpos != outpos){
 					int ret = sock->Sock->SendRaw(outbuffer + curpos, outpos - curpos);
 					if (ret <= 0){
-						sock->Sock->Valid = false;
+						sock->Sock->close();
 						break;
 					}
 
@@ -393,7 +393,7 @@ void* SockWorker(void *obj){
 			delete sendsize;
 			delete (int*)cur->data3;
 
-			ne->data1 = new bool(sock->Sock->Valid);
+			ne->data1 = new bool(sock->Sock->state == EzSock::SockState::skCONNECTED);
 			ne->data2 = new int(sent);
 			ne->Type = EventType::Send;
 		}break;
@@ -806,14 +806,14 @@ GMOD_FUNCTION(SOCK_Send){
 			p->Sock = s->Sock;
 			p->Send();
 
-			LUA->PushBool(s->Sock->Valid);
+			LUA->PushBool(s->Sock->state == EzSock::SockState::skCONNECTED);
 			return 1;
 		}else{
 			int curpos = 0;
 			while(curpos != p->OutPos){
 				int ret = s->Sock->SendRaw(p->OutBuffer + curpos, p->OutPos - curpos);
 				if (ret <= 0){
-					s->Sock->Valid = false;
+					s->Sock->close();
 					break;
 				}
 				
@@ -822,7 +822,7 @@ GMOD_FUNCTION(SOCK_Send){
 			
 			p->Clear();
 			
-			LUA->PushBool(s->Sock->Valid);
+			LUA->PushBool(s->Sock->state == EzSock::SockState::skCONNECTED);
 			return 1;
 		}
 	}
@@ -1274,7 +1274,7 @@ GMOD_FUNCTION(PACK_OutPos){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); L
 GMOD_FUNCTION(PACK_CLEAR){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); (GETPACK(1))->Clear(); return 0; }
 
 GMOD_FUNCTION(PACK_IsValid){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_PACKET); LUA->PushBool((GETPACK(1))->Valid); return 1; }
-GMOD_FUNCTION(SOCK_IsValid){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushBool((GETSOCK(1))->Sock->Valid); return 1; }
+GMOD_FUNCTION(SOCK_IsValid) { DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushBool((GETSOCK(1))->Sock->state == EzSock::SockState::skCONNECTED || (GETSOCK(1))->Sock->state == EzSock::SockState::skLISTENING); return 1; }
 GMOD_FUNCTION(SOCK_GetIP){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushString(inet_ntoa((GETSOCK(1))->Sock->addr.sin_addr)); return 1; }
 GMOD_FUNCTION(SOCK_GetPort){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber(ntohs((GETSOCK(1))->Sock->addr.sin_port)); return 1; }
 GMOD_FUNCTION(SOCK_GetState){ DEBUGPRINTFUNC; LUA->CheckType(1, UD_TYPE_SOCKET); LUA->PushNumber((GETSOCK(1))->Sock->state); return 1; }

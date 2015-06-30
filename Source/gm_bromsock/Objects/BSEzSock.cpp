@@ -37,7 +37,6 @@ namespace BromScript{
 
 		this->sock = INVALID_SOCKET;
 		this->blocking = true;
-		this->Valid = false;
 		this->scks = new fd_set;
 		this->times = new timeval;
 		this->times->tv_sec = 0;
@@ -97,7 +96,6 @@ namespace BromScript{
 		if (lastCode == SOCKET_ERROR) return false;
 
 		state = skLISTENING;
-		this->Valid = true;
 		return true;
 	}
 
@@ -150,7 +148,6 @@ namespace BromScript{
 			return 3;
 
 		state = skCONNECTED;
-		this->Valid = true;
 		return 0;
 	}
 

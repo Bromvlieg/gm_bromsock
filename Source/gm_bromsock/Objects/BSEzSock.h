@@ -34,7 +34,6 @@ namespace BromScript{
 		};
 
 		bool blocking;
-		bool Valid;
 
 		struct sockaddr_in addr;
 		struct sockaddr_in fromAddr;
