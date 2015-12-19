@@ -115,6 +115,9 @@ public:
 			pthread_create(&a, NULL, &SockWorker, this);
 			pthread_create(&b, NULL, &SockWorker, this);
 
+			pthread_detach(a);
+			pthread_detach(b);
+
 			Threadhandles.push_back(a);
 			Threadhandles.push_back(b);
 		#endif
@@ -172,8 +175,6 @@ public:
 				for (unsigned int i = 0; i < this->Threadhandles.size(); i++) {
 #ifdef _MSC_VER
 					CloseHandle(this->Threadhandles[i]);
-#else
-					pthread_join(this->Threadhandles[i], 0);
 #endif
 				}
 
@@ -994,6 +995,8 @@ GMOD_FUNCTION(SOCK_AddWorker){
 #else
 		pthread_t a;
 		pthread_create(&a, NULL, &SockWorker, s);
+		pthread_detach(a);
+
 		s->Threadhandles.push_back(a);
 #endif
 
