@@ -6,7 +6,7 @@
 #include <string.h>
 #endif
 
-namespace BromScript{
+namespace GMBSOCK {
 	void swap_2(void* source) {
 		char ret[2];
 		for (int i = 0; i < 2; i++) {
@@ -47,21 +47,21 @@ namespace BromScript{
 	Packet::Packet(){
 		this->Valid = false;
 
-		this->Sock = null;
+		this->Sock = nullptr;
 		this->RefCount = 0;
 		this->InPos = 0;
 		this->InSize = 0;
 
 		this->OutPos = 0;
 		this->OutSize = 0;
-		this->OutBuffer = null;
-		this->InBuffer = null;
+		this->OutBuffer = nullptr;
+		this->InBuffer = nullptr;
 
 		this->EndianType = 0;
 	}
 
 	Packet::Packet(EzSock* sock){
-		this->Valid = sock != null;
+		this->Valid = sock != nullptr;
 		
 		this->RefCount = 0;
 		this->Sock = sock;
@@ -70,8 +70,8 @@ namespace BromScript{
 
 		this->OutPos = 0;
 		this->OutSize = 0;
-		this->OutBuffer = null;
-		this->InBuffer = null;
+		this->OutBuffer = nullptr;
+		this->InBuffer = nullptr;
 
 		this->EndianType = 0;
 	}
@@ -81,16 +81,16 @@ namespace BromScript{
 	}
 
 	void Packet::Clear(){
-		if (this->InBuffer != null) delete[] this->InBuffer;
-		if (this->OutBuffer != null) delete[] this->OutBuffer;
+		if (this->InBuffer != nullptr) delete[] this->InBuffer;
+		if (this->OutBuffer != nullptr) delete[] this->OutBuffer;
 	
 		this->InPos = 0;
 		this->InSize = 0;
-		this->InBuffer = null;
+		this->InBuffer = nullptr;
 
 		this->OutPos = 0;
 		this->OutSize = 0;
-		this->OutBuffer = null;
+		this->OutBuffer = nullptr;
 	}
 
 	void Packet::CheckSpaceOut(int needed){
@@ -103,7 +103,7 @@ namespace BromScript{
 		this->OutSize += addsize;
 		unsigned char* newbuff = new unsigned char[this->OutSize];
 
-		if(this->OutBuffer != null) {
+		if(this->OutBuffer != nullptr) {
 			memcpy(newbuff, this->OutBuffer, this->OutSize - addsize);
 			delete[] this->OutBuffer;
 		}
@@ -121,7 +121,7 @@ namespace BromScript{
 		this->InSize += addsize;
 		unsigned char* newbuff = new unsigned char[this->InSize];
 
-		if(this->InBuffer != null) {
+		if(this->InBuffer != nullptr) {
 			memcpy(newbuff, this->InBuffer, this->InSize - addsize);
 			delete[] this->InBuffer;
 		}
@@ -142,7 +142,7 @@ namespace BromScript{
 	}
 
 	unsigned char* Packet::ReadBytes(int len){
-		if (!this->CanRead(len)) return null;
+		if (!this->CanRead(len)) return nullptr;
 
 		this->InPos += len;
 		return this->InBuffer + (this->InPos - len);
@@ -266,7 +266,7 @@ namespace BromScript{
 	char* Packet::ReadStringNT(unsigned int* outlen) {
 		int startpos = this->InPos;
 
-		while (this->CanRead(1) && this->InBuffer[this->InPos++] != null) {
+		while (this->CanRead(1) && this->InBuffer[this->InPos++] != 0) {
 			// a buttload of nothing
 		}
 
@@ -319,13 +319,13 @@ namespace BromScript{
 		return this->InSize - this->InPos > 0;
 	}
 
-	bool Packet::CanRead(int numofbytes){
+	bool Packet::CanRead(int numofbytes, SSL* ssl){
 		bool res = this->InSize - this->InPos >= (unsigned int)(numofbytes);
-		if (res == false && this->Sock != null){
+		if (res == false && this->Sock != nullptr){
 			unsigned char* tmp = new unsigned char[numofbytes];
 			int recamount = 0;
 			while(recamount != numofbytes){
-				int currec = recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0);
+				int currec = ssl == nullptr ? recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0) : SSL_read(ssl, (char*)tmp + recamount, numofbytes - recamount);
 
 				if (currec == -1 || currec == 0){
 					if (recamount > 0){
@@ -353,8 +353,8 @@ namespace BromScript{
 		return res;
 	}
 
-	bool Packet::CanRead(char* seq){
-		if (this->Sock == null)
+	bool Packet::CanRead(char* seq, SSL* ssl){
+		if (this->Sock == nullptr)
 			return false;
 
 		char* buffer = new char[4096];
@@ -362,7 +362,7 @@ namespace BromScript{
 		int seqsize = strlen(seq);
 
 		while(true){
-			int currec = recv(this->Sock->sock, buffer + curoffset, 1, 0);
+			int currec = ssl == nullptr ? recv(this->Sock->sock, buffer + curoffset, 1, 0) : SSL_read(ssl, buffer + curoffset, 1);
 			
 			if (currec == -1 || currec == 0){
 				this->Sock->state = EzSock::skERROR;
@@ -506,7 +506,7 @@ namespace BromScript{
 		for (int i = 0; i < size; i++)
 			this->OutBuffer[this->OutPos++] = str[i];
 
-		this->OutBuffer[this->OutPos++] = null;
+		this->OutBuffer[this->OutPos++] = 0;
 	}
 
 	void Packet::WriteStringRaw(const char* str, unsigned int size){
@@ -527,15 +527,20 @@ namespace BromScript{
 		this->OutBuffer[this->OutPos++] = '\n';
 	}
 
-	void Packet::Send(){
+	void Packet::Send(SSL* ssl){
 		unsigned int outsize = this->OutPos;
 		if (this->EndianType != 0 && this->EndianType != get_local_endian()) swap_4(&outsize);
 
-		this->Sock->SendRaw((unsigned char*)&outsize, 4);
-		this->Sock->SendRaw(this->OutBuffer, this->OutPos);
+		if (ssl == nullptr) {
+			this->Sock->SendRaw((unsigned char*)&outsize, 4);
+			this->Sock->SendRaw(this->OutBuffer, this->OutPos);
+		} else {
+			SSL_write(ssl, (unsigned char*)&outsize, 4);
+			SSL_write(ssl, this->OutBuffer, this->OutPos);
+		}
 
 		delete[] this->OutBuffer;
-		this->OutBuffer = null;
+		this->OutBuffer = nullptr;
 		this->OutPos = 0;
 		this->OutSize = 0;
 	}

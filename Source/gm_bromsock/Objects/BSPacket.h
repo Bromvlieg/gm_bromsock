@@ -1,13 +1,11 @@
-#ifndef CLASS_PACKET
-#define CLASS_PACKET
+#ifndef __H_GMBSOCK_O_PACKET
+#define __H_GMBSOCK_O_PACKET
 
 #include "BSEzSock.h"
 
-#ifndef null
-#define null 0
-#endif
+#include <openssl/ssl.h>
 
-namespace BromScript{
+namespace GMBSOCK {
 	class Packet{
 	public:
 		// 0 == system endian, defaults to this
@@ -62,13 +60,13 @@ namespace BromScript{
 		char* ReadUntil(const char* seq, unsigned int seqsize, unsigned int* outlen);
 		char* ReadStringNT(unsigned int* outlen);
 		char* ReadStringAll(unsigned int* outlen);
-		
-		bool CanRead(int len);
-		bool CanRead(char* seq);
+
+		bool CanRead(int len, SSL* ssl = nullptr);
+		bool CanRead(char* seq, SSL* ssl = nullptr);
 		bool HasDataLeft();
 		int DataLeft();
 
-		void Send();
+		void Send(SSL* ssl);
 
 		void CheckSpaceOut(int);
 		void AllocateMoreSpaceOut(int);

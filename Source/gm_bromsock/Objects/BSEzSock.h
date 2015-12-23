@@ -1,5 +1,5 @@
-#ifndef BSEzSock_H
-#define BSEzSock_H
+#ifndef __H_GMBSOCK_O_EZSOCK
+#define __H_GMBSOCK_O_EZSOCK
 
 #define _WINSOCKAPI_
 
@@ -14,7 +14,7 @@
 #include <netinet/in.h>
 #endif
 
-namespace BromScript{
+namespace GMBSOCK {
 	class Packet;
 
 	using namespace std;

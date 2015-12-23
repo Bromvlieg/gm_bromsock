@@ -100,6 +100,7 @@ Disconnect()
 Close()
 GetIP()
 GetPort()
+StartSSLClient() -- true/false, starts a TLS v1.2 session, and will use this for all following read and writes
 
 SetBlocking(bool)
 -- default this is true. You should not touch this, unless you know what you're doing

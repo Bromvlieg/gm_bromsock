@@ -26,7 +26,7 @@ typedef int socklen_t;
 #define INVALID_SOCKET -1
 #endif
 
-namespace BromScript{
+namespace GMBSOCK {
 	EzSock::EzSock(){
 		MAXCON = 64;
 		memset (&addr, 0, sizeof(addr));

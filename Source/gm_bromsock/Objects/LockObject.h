@@ -1,5 +1,5 @@
-#ifndef BROMMC_LOCKOBJECT
-#define BROMMC_LOCKOBJECT
+#ifndef __H_GMBSOCK_O_LOCKOBJECT
+#define __H_GMBSOCK_O_LOCKOBJECT
 
 #ifdef _MSC_VER
 #include "Windows.h"
@@ -7,23 +7,24 @@
 #include <pthread.h>
 #endif
 
-class LockObject
-{
-public:
-	LockObject(void);
-	~LockObject(void);
+namespace GMBSOCK {
+	class LockObject {
+	public:
+		LockObject(void);
+		~LockObject(void);
 
-	void Lock();
-	void Unlock();
+		void Lock();
+		void Unlock();
 
-private:
-	int CurrentLocks;
-	
+	private:
+		int CurrentLocks;
+
 #ifdef _MSC_VER
-	CRITICAL_SECTION LockHandle;
+		CRITICAL_SECTION LockHandle;
 #else
-	pthread_mutex_t LockHandle;
+		pthread_mutex_t LockHandle;
 #endif
-};
+	};
+}
 
 #endif

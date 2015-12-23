@@ -2,13 +2,18 @@
 
 require( "bromsock" );
 
--- url: http://4o3.nl
+-- url: http://google.com (https also supported)
 -- method: GET or POST
 -- postdatatbl: nil, unles you have POST set as method, then a key/value table containing the data
 -- callback: function(table headers, string body)
 function HTTPRequest(url, method, postdatatbl, callback)
+	local port = 80
+
 	if (string.StartWith(url, "http://")) then
 		url = string.Right(url, #url - 7)
+	elseif (string.StartWith(url, "https://")) then
+		url = string.Right(url, #url - 8)
+		port = 443;
 	end
 
 	local host = ""
@@ -47,6 +52,10 @@ function HTTPRequest(url, method, postdatatbl, callback)
 		if (not bConnected) then
 			callback(nil, nil)
 			return;
+		end
+		
+		if (port == 443) then
+			pClient:StartSSLClient()
 		end
 		
 		pPacket:WriteLine(method .. " " .. path .. " HTTP/1.1");
@@ -89,7 +98,7 @@ function HTTPRequest(url, method, postdatatbl, callback)
 				chunkedmode = true
 				pClient:ReceiveUntil( "\r\n" );
 			else
-				-- This is why we can't have nice fucking things.
+				-- This is why we can't have nice things.
 				pClient:Receive(99999);
 			end
 		elseif (chunkedmode) then
@@ -118,10 +127,9 @@ function HTTPRequest(url, method, postdatatbl, callback)
 		end
 	end)
 	
-	pClient:Connect(host, 80);
+	pClient:Connect(host, port);
 end
 
--- Why is this not in the default string.lua?
 function string.IndexOf(needle, haystack)
 	for i = 1, #haystack do
 		if (haystack[i] == needle) then
@@ -134,7 +142,7 @@ end
 
 -- headers is a table containing all the headers lowercase
 -- body is the source of the webpage
-HTTPRequest("http://4o3.nl", "GET", nil, function(headers, body)
+HTTPRequest("https://google.com", "GET", nil, function(headers, body)
 	if (not headers) then
 		print("request failed")
 		return

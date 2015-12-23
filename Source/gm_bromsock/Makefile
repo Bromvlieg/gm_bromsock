@@ -1,5 +1,5 @@
 INCLUDES		= 
-LIBS			= -lstdc++ 
+LIBS			= -lstdc++ -lssl -lcrypto 
 
 sourcefiles		:= $(shell find . -name "*.cpp")
 objfiles		:= $(patsubst %.cpp,obj/%.o,$(sourcefiles))

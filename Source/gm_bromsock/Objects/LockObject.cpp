@@ -1,38 +1,33 @@
 #include "LockObject.h"
 
-LockObject::LockObject(void):CurrentLocks(0) {
 #ifdef _MSC_VER
-	InitializeCriticalSectionAndSpinCount(&this->LockHandle, 0x00000400);
+#define _m_init(hndl) InitializeCriticalSectionAndSpinCount(&hndl, 0x00000400);
+#define _m_destroy(hndl) DeleteCriticalSection(&hndl);
+#define _m_lock(hndl) EnterCriticalSection(&hndl);
+#define _m_unlock(hndl) LeaveCriticalSection(&hndl);
 #else
-	pthread_mutex_init(&this->LockHandle, NULL);
-#endif
-}
-
-LockObject::~LockObject(void){
-#ifdef _MSC_VER
-	DeleteCriticalSection(&this->LockHandle);
-#else
-	pthread_mutex_destroy(&this->LockHandle);
-#endif
-}
-
-void LockObject::Lock(){
-
-#ifdef _MSC_VER
-	EnterCriticalSection(&this->LockHandle);
-#else
-	pthread_mutex_lock(&this->LockHandle);
+#define _m_init(hndl) pthread_mutex_init(&hndl, NULL);
+#define _m_destroy(hndl) pthread_mutex_destroy(&hndl);
+#define _m_lock(hndl) pthread_mutex_lock(&hndl);
+#define _m_unlock(hndl) pthread_mutex_unlock(&hndl);
 #endif
 
-	this->CurrentLocks++;
-}
+namespace GMBSOCK {
+	LockObject::LockObject(void) : CurrentLocks(0) {
+		_m_init(this->LockHandle);
+	}
 
-void LockObject::Unlock(){
-#ifdef _MSC_VER
-	LeaveCriticalSection(&this->LockHandle);
-#else
-	pthread_mutex_unlock(&this->LockHandle);
-#endif
+	LockObject::~LockObject(void) {
+		_m_destroy(this->LockHandle);
+	}
 
-	this->CurrentLocks--;
+	void LockObject::Lock() {
+		_m_lock(this->LockHandle);
+		this->CurrentLocks++;
+	}
+
+	void LockObject::Unlock() {
+		_m_unlock(this->LockHandle);
+		this->CurrentLocks--;
+	}
 }
