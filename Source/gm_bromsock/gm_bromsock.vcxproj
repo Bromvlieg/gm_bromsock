@@ -72,7 +72,7 @@ COPY "$(TargetPath)" "D:\Software\Steam\steamapps\common\GarrysMod\garrysmod\lua
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>E:\AutoSync\Programming\Libs\OpenSSL\lib\VC</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\AutoSync\Programming\Libs\OpenSSL\lib\VC\static</AdditionalLibraryDirectories>
       <AdditionalDependencies>libeay32MTd.lib;libeay32MT.lib;libeay32MDd.lib;libeay32MD.lib;ssleay32MTd.lib;ssleay32MT.lib;ssleay32MDd.lib;ssleay32MD.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
