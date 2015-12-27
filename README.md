@@ -19,6 +19,12 @@ This is distributed under the MIT license.
 ##Notes
 	Regarding the documentation below, arguments in [tags] are optional and can be ignored.
     If you use callbacks(which you should), then the functions which use callbacks will return nothing
+	
+	To receive and send data to non bromsock sockets, you'll have to add the true argument to the sock:Send(packet, [dontsendlength])
+	And you'll have to provide a number of bytes to receive in the sock:Receive([count]) (or use sock:ReceiveUntil(string))
+	
+	If you want to receive more than 10MB in one sock:Receive([count]) call, you'll have to use sock:SetMaxReceiveSize(maxbytes) first
+	to prevent the sanity checker throwing errors
     
     Every socket has 2 worker threads. A worker will block(unless you set blocking to false) until the requested action is done.
     This means, that you can call 2 functions at the same time. Example: Send and Receive.
@@ -101,6 +107,7 @@ Close()
 GetIP()
 GetPort()
 StartSSLClient() -- true/false, starts a TLS v1.2 session, and will use this for all following read and writes
+SetMaxReceiveSize(maxbytes) -- sets the sanity checkers limit, defaults to 10MB max
 
 SetBlocking(bool)
 -- default this is true. You should not touch this, unless you know what you're doing

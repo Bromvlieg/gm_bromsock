@@ -102,17 +102,25 @@ namespace GMBSOCK {
 							delete p;
 						}
 					} else {
-						if ((*len == -1 && (*len = p->ReadInt()) == 0) || !p->CanRead(*len, sock->ssl)) {
-							delete p;
+						if (*len == -1) {
+							*len = p->ReadInt();
+						}
+
+						if (*len > sock->MaxReceiveSize || *len < 0) {
+							ne->data2 = new int(*len);
 						} else {
-							ne->data1 = p;
+							if (*len == 0 || !p->CanRead(*len, sock->ssl)) {
+								delete p;
+							} else {
+								ne->data1 = p;
+							}
 						}
 					}
 
 					ne->Type = EventType::Receive;
 
 					if (cur->data1 != nullptr) delete (int*)cur->data1;
-					if (cur->data2 != nullptr) delete[](char*)cur->data1;
+					if (cur->data2 != nullptr) delete[](char*)cur->data2;
 				}break;
 
 				case EventType::ReceiveFrom:{
@@ -247,7 +255,8 @@ namespace GMBSOCK {
 		DestoryWorkers(false),
 		DidDisconnectCallback(false),
 		sslCtx(nullptr),
-		ssl(nullptr)
+		ssl(nullptr),
+		MaxReceiveSize(1024 * 1024 * 10) // 10MB should be more than enough for default networking i think
 	{
 		
 	}

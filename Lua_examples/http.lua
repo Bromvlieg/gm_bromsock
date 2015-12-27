@@ -2,7 +2,7 @@
 
 require( "bromsock" );
 
--- url: http://google.com (https also supported)
+-- url: http(s)://google.com
 -- method: GET or POST
 -- postdatatbl: nil, unles you have POST set as method, then a key/value table containing the data
 -- callback: function(table headers, string body)
@@ -71,6 +71,7 @@ function HTTPRequest(url, method, postdatatbl, callback)
 			pPacket:WriteLine(postdata)
 		end
 
+		pClient:SetMaxReceiveSize(1024 * 1024 * 100); -- some webpages like to embed images, so this can get quite big. Lets allow it to allocate up to 100MB
 		pClient:Send( pPacket, true );
 		pClient:ReceiveUntil( "\r\n\r\n" );
 	end );

@@ -57,6 +57,7 @@ namespace GMBSOCK {
 			ADDFUNC("AddWorker", SOCK_AddWorker);
 			ADDFUNC("SetTimeout", SOCK_SetTimeout);
 			ADDFUNC("SetOption", SOCK_SetOption);
+			ADDFUNC("SetMaxReceiveSize", SOCK_SetMaxReceiveSize);
 			ADDFUNC("SetCallbackReceive", SOCK_CALLBACKReceive);
 			ADDFUNC("SetCallbackReceiveFrom", SOCK_CALLBACKReceiveFrom);
 			ADDFUNC("SetCallbackSend", SOCK_CALLBACKSend);
@@ -359,6 +360,14 @@ namespace GMBSOCK {
 							CALLLUAFUNC(2);
 						} else {
 							sw->CallDisconnect();
+
+							if (se->data2 != nullptr) {
+								char buff[256];
+								sprintf(buff, "error in bromsock_C++ allocating buffer to receive %d bytes from %s:%d", *(int*)se->data2, inet_ntoa(sw->Sock->addr.sin_addr), ntohs(sw->Sock->addr.sin_port));
+
+								delete (int*)se->data2;
+								LUA->ThrowError(buff);
+							}
 						}
 					}break;
 

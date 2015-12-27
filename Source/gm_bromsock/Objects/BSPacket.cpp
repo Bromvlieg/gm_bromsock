@@ -320,6 +320,8 @@ namespace GMBSOCK {
 	}
 
 	bool Packet::CanRead(int numofbytes, SSL* ssl){
+		if (numofbytes == 0) return true;
+
 		bool res = this->InSize - this->InPos >= (unsigned int)(numofbytes);
 		if (res == false && this->Sock != nullptr){
 			unsigned char* tmp = new unsigned char[numofbytes];

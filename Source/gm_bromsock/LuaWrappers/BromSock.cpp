@@ -276,6 +276,17 @@ namespace GMBSOCK {
 		}
 	}
 
+	GMOD_FUNCTION(SOCK_SetMaxReceiveSize) {
+		DEBUGPRINTFUNC;
+		LUA->CheckType(1, UD_TYPE_SOCKET);
+		LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+
+		SockWrapper* s = GETSOCK(1);
+		s->MaxReceiveSize = (int)LUA->GetNumber(2);
+
+		return 0;
+	}
+
 	GMOD_FUNCTION(SOCK_Receive) {
 		DEBUGPRINTFUNC;
 
@@ -297,6 +308,14 @@ namespace GMBSOCK {
 			Packet* p = new Packet(s->Sock);
 			if (toread == -1) {
 				toread = p->ReadInt();
+			}
+
+			if (toread > s->MaxReceiveSize || toread < 0) {
+				char buff[256];
+				sprintf(buff, "error in bromsock_C++ allocating buffer to receive %d bytes from %s:%d", toread, inet_ntoa(s->Sock->addr.sin_addr), ntohs(s->Sock->addr.sin_port));
+
+				LUA->ThrowError(buff);
+				return 0;
 			}
 
 			if (!p->CanRead(toread, s->ssl)) {
@@ -326,6 +345,14 @@ namespace GMBSOCK {
 		if (s->Callback_ReceiveFrom == -1) LUA->ThrowError("ReceiveFrom only supports callbacks. Please use this. It's the way to go for networking.");
 
 		int toread = LUA->IsType(2, GarrysMod::Lua::Type::NUMBER) ? (int)LUA->GetNumber(2) : 65535; // max "theoretical" diagram size
+
+		if (toread > s->MaxReceiveSize || toread < 0) {
+			char buff[256];
+			sprintf(buff, "error in bromsock_C++ allocating buffer to receive %d bytes from %s:%d", toread, inet_ntoa(s->Sock->addr.sin_addr), ntohs(s->Sock->addr.sin_port));
+
+			LUA->ThrowError(buff);
+			return 0;
+		}
 
 		SockEvent* se = new SockEvent();
 		se->Type = EventType::ReceiveFrom;
@@ -543,11 +570,7 @@ namespace GMBSOCK {
 
 		char* ipstr = inet_ntoa(s->Sock->addr.sin_addr);
 		char buff[256];
-#ifdef _MSC_VER
-		sprintf_s(buff, "bromsock{%s:%d}", ipstr, ntohs(s->Sock->addr.sin_port));
-#else
 		sprintf(buff, "bromsock{%s:%d}", ipstr, ntohs(s->Sock->addr.sin_port));
-#endif
 
 		LUA->PushString(buff);
 

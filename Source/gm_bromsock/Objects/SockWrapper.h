@@ -55,6 +55,8 @@ namespace GMBSOCK {
 		bool DestoryWorkers;
 		bool DidDisconnectCallback;
 
+		int MaxReceiveSize;
+
 		int SocketType;
 
 		std::vector<SockEvent*> Todo;
