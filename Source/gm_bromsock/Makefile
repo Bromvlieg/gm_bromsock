@@ -1,5 +1,5 @@
 INCLUDES		= 
-LIBS			= -lstdc++ -lssl -lcrypto 
+LIBS			= -lstdc++ -l:libssl.so.1.0.0 -l:libcrypto.so.1.0.0
 
 sourcefiles		:= $(shell find . -name "*.cpp")
 objfiles		:= $(patsubst %.cpp,obj/%.o,$(sourcefiles))
@@ -8,10 +8,10 @@ objfiles		:= $(patsubst %.cpp,obj/%.o,$(sourcefiles))
 all: gmsv_bromsock_linux.so
 
 gmsv_bromsock_linux.so: $(objfiles)
-	gcc -m32 -shared -fPIC -std=c++11 $(INCLUDES) -o gmsv_bromsock_linux.so $(objfiles) $(LIBS)
+	g++ -m32 -shared -fPIC -std=c++11 $(INCLUDES) -o gmsv_bromsock_linux.so $(objfiles) $(LIBS)
 
 obj/%.o : %.cpp
-	gcc -m32 -fPIC -std=c++11 $(INCLUDES) $(LIBS) -c $< -o $@
+	g++ -m32 -fPIC -std=c++11 $(INCLUDES) $(LIBS) -c $< -o $@
 
 .PHONY: clean
 clean:
