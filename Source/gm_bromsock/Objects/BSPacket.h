@@ -3,9 +3,8 @@
 
 #include "BSEzSock.h"
 
-#include <openssl/ssl.h>
-
-namespace GMBSOCK {
+typedef struct ssl_st SSL;
+namespace GMBSOCK {	
 	class Packet{
 	public:
 		// 0 == system endian, defaults to this

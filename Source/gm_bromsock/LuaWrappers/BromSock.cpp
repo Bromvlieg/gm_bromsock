@@ -6,6 +6,7 @@
 #include "../Objects/LockObject.h"
 #include "../Objects/SockWrapper.h"
 
+#ifndef BROMSOCK_NOSSL
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -15,6 +16,7 @@
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
 #include <openssl/opensslconf.h>
+#endif
 
 namespace GMBSOCK {
 	GMOD_FUNCTION(CreateSocket) {
@@ -128,6 +130,7 @@ namespace GMBSOCK {
 		return 0;
 	}
 
+#ifndef BROMSOCK_NOSSL
 	SSL_CTX* InitCTX(void) {
 		const SSL_METHOD *method;
 		SSL_CTX *ctx;
@@ -144,10 +147,12 @@ namespace GMBSOCK {
 
 		return ctx;
 	}
+#endif
 
 	GMOD_FUNCTION(SOCK_StartSSLClient) {
 		DEBUGPRINTFUNC;
 
+#ifndef BROMSOCK_NOSSL
 		LUA->CheckType(1, UD_TYPE_SOCKET);
 		SockWrapper* sw = GETSOCK(1);
 
@@ -170,6 +175,10 @@ namespace GMBSOCK {
 
 		LUA->PushBool(true);
 		return 1;
+#else
+		LUA->ThrowError("bromsock has been build without SSL support, download the version with SSL!");
+#endif
+		return 0;
 	}
 
 	GMOD_FUNCTION(SOCK_Disconnect) {
@@ -259,7 +268,11 @@ namespace GMBSOCK {
 			} else {
 				int curpos = 0;
 				while (curpos != p->OutPos) {
+#ifndef BROMSOCK_NOSSL
 					int ret = s->ssl == nullptr ? s->Sock->SendRaw(p->OutBuffer + curpos, p->OutPos - curpos) : SSL_write(s->ssl, p->OutBuffer + curpos, p->OutPos - curpos);
+#else
+					int ret = s->Sock->SendRaw(p->OutBuffer + curpos, p->OutPos - curpos);
+#endif
 					if (ret <= 0) {
 						s->Sock->close();
 						break;

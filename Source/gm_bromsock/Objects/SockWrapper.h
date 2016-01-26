@@ -9,8 +9,7 @@
 #include <Windows.h>
 #endif
 
-#include <openssl/ssl.h>
-
+typedef struct ssl_ctx_st SSL_CTX;
 namespace GMBSOCK {
 	class EzSock;
 

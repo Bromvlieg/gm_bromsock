@@ -10,6 +10,7 @@
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+[Rr]elease_nossl/
 x64/
 build/
 bld/

@@ -6,6 +6,10 @@
 #include <string.h>
 #endif
 
+#ifndef BROMSOCK_NOSSL
+#include <openssl/ssl.h>
+#endif
+
 namespace GMBSOCK {
 	void swap_2(void* source) {
 		char ret[2];
@@ -327,8 +331,11 @@ namespace GMBSOCK {
 			unsigned char* tmp = new unsigned char[numofbytes];
 			int recamount = 0;
 			while(recamount != numofbytes){
+#ifndef BROMSOCK_NOSSL
 				int currec = ssl == nullptr ? recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0) : SSL_read(ssl, (char*)tmp + recamount, numofbytes - recamount);
-
+#else
+				int currec = recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0);
+#endif
 				if (currec == -1 || currec == 0){
 					if (recamount > 0){
 						// even trough we didn't receive everything we wanted, we DID receive something. Which means it worked? Right?
@@ -363,8 +370,12 @@ namespace GMBSOCK {
 		int curoffset = 0;
 		int seqsize = strlen(seq);
 
-		while(true){
+		while (true) {
+#ifndef BROMSOCK_NOSSL
 			int currec = ssl == nullptr ? recv(this->Sock->sock, buffer + curoffset, 1, 0) : SSL_read(ssl, buffer + curoffset, 1);
+#else
+			int currec = recv(this->Sock->sock, buffer + curoffset, 1, 0);
+#endif
 			
 			if (currec == -1 || currec == 0){
 				this->Sock->state = EzSock::skERROR;
@@ -537,8 +548,10 @@ namespace GMBSOCK {
 			this->Sock->SendRaw((unsigned char*)&outsize, 4);
 			this->Sock->SendRaw(this->OutBuffer, this->OutPos);
 		} else {
+#ifndef BROMSOCK_NOSSL
 			SSL_write(ssl, (unsigned char*)&outsize, 4);
 			SSL_write(ssl, this->OutBuffer, this->OutPos);
+#endif
 		}
 
 		delete[] this->OutBuffer;

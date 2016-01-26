@@ -8,6 +8,10 @@
 #include "Engine.h"
 #include "LockObject.h"
 
+#ifndef BROMSOCK_NOSSL
+#include <openssl/ssl.h>
+#endif
+
 namespace GMBSOCK {
 #ifdef _MSC_VER
 	DWORD WINAPI SockWorkerFunction(void* obj) {
@@ -180,7 +184,11 @@ namespace GMBSOCK {
 					} else {
 						int curpos = 0;
 						while (curpos != outpos) {
+#ifndef BROMSOCK_NOSSL
 							int ret = sock->ssl != nullptr ? SSL_write(sock->ssl, outbuffer + curpos, outpos - curpos) : sock->Sock->SendRaw(outbuffer + curpos, outpos - curpos);
+#else
+							int ret = sock->Sock->SendRaw(outbuffer + curpos, outpos - curpos);
+#endif
 							if (ret <= 0) {
 								sock->Sock->close();
 								break;
@@ -333,6 +341,7 @@ namespace GMBSOCK {
 	void SockWrapper::KillWorkers() {
 		DEBUGPRINTFUNC;
 
+#ifndef BROMSOCK_NOSSL
 		if (this->sslCtx != nullptr) {
 			SSL_CTX_free(this->sslCtx);
 			this->sslCtx = nullptr;
@@ -342,6 +351,7 @@ namespace GMBSOCK {
 			SSL_free(this->ssl);
 			this->ssl = nullptr;
 		}
+#endif
 
 		this->Sock->close();
 
