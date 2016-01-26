@@ -6,7 +6,8 @@ A networking module for Garry's Mod created by [Bromvlieg](https://github.com/Br
 Facepunch forum thread: http://facepunch.com/showthread.php?t=1393640
 
 ##Example code
-*	[HTTP](Lua_examples/http.lua)
+*	[HTTP host](Lua_examples/httphost.lua)
+*	[HTTP request](Lua_examples/httprequest.lua)
 *	[IRC](Lua_examples/irc.lua)
 *	[UDP](Lua_examples/udp.lua)
 *	[Host and Connect](Lua_examples/host_and_connect.lua)
