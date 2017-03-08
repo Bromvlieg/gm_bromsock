@@ -18,7 +18,7 @@ This is distributed under the MIT license.
 
 
 ##Notes
-	Windows .dll is compiled with Visual studio 2013 using the [2013 redist](https://www.microsoft.com/en-us/download/details.aspx?id=40784)
+	Windows .dll is compiled with Visual studio 2013 using the 2013 redist (https://www.microsoft.com/en-us/download/details.aspx?id=40784)
 
 	Regarding the documentation below, arguments in [tags] are optional and can be ignored.
     If you use callbacks(which you should), then the functions which use callbacks will return nothing
