@@ -341,18 +341,6 @@ namespace GMBSOCK {
 	void SockWrapper::KillWorkers() {
 		DEBUGPRINTFUNC;
 
-#ifndef BROMSOCK_NOSSL
-		if (this->sslCtx != nullptr) {
-			SSL_CTX_free(this->sslCtx);
-			this->sslCtx = nullptr;
-		}
-
-		if (this->ssl != nullptr) {
-			SSL_free(this->ssl);
-			this->ssl = nullptr;
-		}
-#endif
-
 		this->Sock->close();
 
 		this->DestoryWorkers = true;
@@ -380,6 +368,18 @@ namespace GMBSOCK {
 			}
 			this->Mutex.Unlock();
 		}
+
+#ifndef BROMSOCK_NOSSL
+		if (this->sslCtx != nullptr) {
+			SSL_CTX_free(this->sslCtx);
+			this->sslCtx = nullptr;
+		}
+
+		if (this->ssl != nullptr) {
+			SSL_free(this->ssl);
+			this->ssl = nullptr;
+		}
+#endif
 
 		this->DestoryWorkers = false;
 	}
