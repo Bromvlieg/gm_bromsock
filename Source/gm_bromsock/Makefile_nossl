@@ -18,7 +18,7 @@ clean:
 	rm -f obj/*.o obj/Objects/*.o gmsv_bromsock_linux_nossl.so
 
 release:
-	cp gmsv_bromsock_linuxno_ssl.so ../../Builds/gmsv_bromsock_linuxno_ssl.dll
+	cp gmsv_bromsock_linux_nossl.so ../../Builds/gmsv_bromsock_linux_nossl.dll
 
 install:
 	cp gmsv_bromsock_linux_nossl.so ~/Servers/GarrysMod/garrysmod/lua/bin/gmsv_bromsock_linux_nossl.dll
