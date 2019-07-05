@@ -92,6 +92,8 @@ namespace GMBSOCK {
 		bool ret = s->Sock->bind(ip, port) && s->Sock->listen();
 		if (ret) s->CreateWorkers();
 
+		LUA->PushBool(ret);
+
 		return 1;
 	}
 
