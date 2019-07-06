@@ -43,6 +43,8 @@ namespace GMBSOCK {
 		this->times->tv_usec = 0;
 		this->state = skDISCONNECTED;
 		this->totaldata = 0;
+		
+		memset(this->lastError, 0, sizeof(this->lastError));
 	}
 
 	EzSock::~EzSock(){
@@ -87,13 +89,43 @@ namespace GMBSOCK {
 		addr.sin_addr.s_addr = inet_addr(ip);
 		addr.sin_port = htons(port);
 		lastCode = ::bind(sock,(struct sockaddr*)&addr, sizeof(addr));
-
-		return !lastCode;
+		if (lastCode == SOCKET_ERROR) {
+#ifdef _MSC_VER
+			lastError[0] = '\0';
+			int errCode = WSAGetLastError();
+			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, errCode,
+				MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+				lastError, sizeof(lastError), NULL);
+			if (!lastError[0]) { // Check for the null byte we set earlier, means FormatMessage failed so we should send the errorcode instead
+				sprintf(lastError, "%d", errCode);
+			}
+#else
+			memcpy(lastError, strerror(errno), sizeof(lastError));
+#endif
+			return false;
+		}
+		return true;
 	}
 
 	bool EzSock::listen(){
 		lastCode = ::listen(sock, MAXCON);
-		if (lastCode == SOCKET_ERROR) return false;
+		if (lastCode == SOCKET_ERROR) {
+#ifdef _MSC_VER
+			lastError[0] = '\0';
+			int errCode = WSAGetLastError();
+			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, errCode,
+				MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+				lastError, sizeof(lastError), NULL);
+			if (!lastError[0]) { // Check for the null byte we set earlier, means FormatMessage failed so we should send the errorcode instead
+				sprintf(lastError, "%d", errCode);
+			}
+#else
+			memcpy(lastError, strerror(errno), sizeof(lastError));
+#endif
+			return false;
+		}
 
 		state = skLISTENING;
 		return true;

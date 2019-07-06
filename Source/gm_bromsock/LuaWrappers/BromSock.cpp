@@ -577,6 +577,15 @@ namespace GMBSOCK {
 		return 0;
 	}
 
+	GMOD_FUNCTION(SOCK_GetLastError) {
+		DEBUGPRINTFUNC;
+
+		LUA->CheckType(1, UD_TYPE_SOCKET);
+		LUA->PushString((GETSOCK(1))->Sock->lastError);
+
+		return 1;
+	}
+
 	GMOD_FUNCTION(SOCK__TOSTRING) {
 		DEBUGPRINTFUNC;
 
