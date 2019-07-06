@@ -316,7 +316,6 @@ namespace GMBSOCK {
 		this->CallDisconnect();
 
 		this->KillWorkers();
-		this->Sock->close();
 
 		delete this->Sock;
 		this->Sock = new EzSock();
