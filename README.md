@@ -98,19 +98,20 @@ SetCallbackConnect(func) -- sock, suceeded, ip, port
 SetCallbackDisconnect(func) -- sock
 SetCallbackAccept(func) -- sock, clientsock (failed: clientsock == nil)
 
-SetTimeout(miliseconds)
+SetTimeout(miliseconds) -- returns true on success
 -- Warning: you need to do this BEFORE you call receive or send, and AFTER you call Connect, Bind, or Listen.
 
 Connect(ip, port) -- true/false
 Bind(ip, port) or (port) -- returns true/false
 Listen(ip, port) or (port) -- returns true/false
 Accept() -- returns a socket or false
-Disconnect()
 Close()
-GetIP()
-GetPort()
+Disconnect() -- Alias of Close
+GetIP() -- Returns the IP as a string
+GetPort() -- Returns the port as a number
 StartSSLClient() -- true/false, starts a TLS v1.2 session, and will use this for all following read and writes
 SetMaxReceiveSize(maxbytes) -- sets the sanity checkers limit, defaults to 10MB max
+IsValid() -- Returns true if the socket is listening or connected
 
 SetBlocking(bool)
 -- default this is true. You should not touch this, unless you know what you're doing
@@ -132,12 +133,20 @@ SendTo(packet, ip, port)
 
 Send(packet, [dontsendlength])
 -- if dontsendlength is true, it WILL NOT add an int in front of the packet to indicate how large the incoming data is. use true if you want to communicate with anything that does not use this way of packeting
+
+-- Implemented and functional meta methods:
+__eq
+__tostring
+__gc
 ```
 
 ##For advanced networking users
 ```lua
 sock:SetOption(level, option, value)
 -- returns the number the internal setoption returns (0 often means success, and -1 failure)
+
+sock:AddWorker()
+-- Adds another worker thread
 ```
 
 ```c
