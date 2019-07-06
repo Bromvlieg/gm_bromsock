@@ -40,6 +40,7 @@ namespace GMBSOCK {
 	GMOD_FUNCTION(SOCK_GetIP);
 	GMOD_FUNCTION(SOCK_GetPort);
 	GMOD_FUNCTION(SOCK_GetState);
+	GMOD_FUNCTION(SOCK_GetLastError);
 }
 
 #endif

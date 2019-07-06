@@ -42,6 +42,7 @@ namespace GMBSOCK {
 		SockState state;
 
 		int lastCode;
+		char lastError[256];
 
 		EzSock();
 		~EzSock();

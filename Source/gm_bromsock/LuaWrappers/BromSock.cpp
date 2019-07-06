@@ -92,6 +92,8 @@ namespace GMBSOCK {
 		bool ret = s->Sock->bind(ip, port) && s->Sock->listen();
 		if (ret) s->CreateWorkers();
 
+		LUA->PushBool(ret);
+
 		return 1;
 	}
 
@@ -573,6 +575,15 @@ namespace GMBSOCK {
 		s->Sock->create(s->SocketType);
 
 		return 0;
+	}
+
+	GMOD_FUNCTION(SOCK_GetLastError) {
+		DEBUGPRINTFUNC;
+
+		LUA->CheckType(1, UD_TYPE_SOCKET);
+		LUA->PushString((GETSOCK(1))->Sock->lastError);
+
+		return 1;
 	}
 
 	GMOD_FUNCTION(SOCK__TOSTRING) {

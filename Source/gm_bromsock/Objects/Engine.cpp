@@ -54,6 +54,7 @@ namespace GMBSOCK {
 			ADDFUNC("GetIP", SOCK_GetIP);
 			ADDFUNC("GetPort", SOCK_GetPort);
 			ADDFUNC("GetState", SOCK_GetState);
+			ADDFUNC("GetLastError", SOCK_GetLastError);
 			ADDFUNC("AddWorker", SOCK_AddWorker);
 			ADDFUNC("SetTimeout", SOCK_SetTimeout);
 			ADDFUNC("SetOption", SOCK_SetOption);
