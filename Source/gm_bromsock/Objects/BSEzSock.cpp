@@ -101,7 +101,7 @@ namespace GMBSOCK {
 				sprintf(lastError, "%d", errCode);
 			}
 #else
-			memcpy(lastError, strerror(errno), sizeof(lastError));
+			strerror_r(errno, lastError, sizeof(lastError));
 #endif
 			return false;
 		}
@@ -122,7 +122,7 @@ namespace GMBSOCK {
 				sprintf(lastError, "%d", errCode);
 			}
 #else
-			memcpy(lastError, strerror(errno), sizeof(lastError));
+			strerror_r(errno, lastError, sizeof(lastError));
 #endif
 			return false;
 		}
