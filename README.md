@@ -22,18 +22,18 @@ This is distributed under the MIT license.
 
 	Regarding the documentation below, arguments in [tags] are optional and can be ignored.
     If you use callbacks(which you should), then the functions which use callbacks will return nothing
-	
+
 	To receive and send data to non bromsock sockets, you'll have to add the true argument to the sock:Send(packet, [dontsendlength])
 	And you'll have to provide a number of bytes to receive in the sock:Receive([count]) (or use sock:ReceiveUntil(string))
-	
+
 	If you want to receive more than 10MB in one sock:Receive([count]) call, you'll have to use sock:SetMaxReceiveSize(maxbytes) first
 	to prevent the sanity checker throwing errors
-    
+
     Every socket has 2 worker threads. A worker will block(unless you set blocking to false) until the requested action is done.
     This means, that you can call 2 functions at the same time. Example: Send and Receive.
     But if you call Receive twice, and send after that, it'll be stuck on receiving until it got some data, after that the Send gets executed
     if you want more workers (Which I don't think you need, but screw it) sock:AddWorker()
-    
+
     WARNING: if you disable blocking, then callbacks WILL generate disconnect events. Callbacks expect blocking, if not, it WILL fuck up
 
 ##Packet
@@ -101,10 +101,10 @@ SetCallbackAccept(func) -- sock, clientsock (failed: clientsock == nil)
 SetTimeout(miliseconds) -- returns true on success
 -- Warning: you need to do this BEFORE you call receive or send, and AFTER you call Connect, Bind, or Listen.
 
-Connect(ip, port) -- true/false
-Bind(ip, port) or (port) -- returns true/false
-Listen(ip, port) or (port) -- returns true/false
-Accept() -- returns a socket or false
+Connect(ip, port) -- returns true/false, get error message using GetLastError if fail.
+Bind(ip, port) or (port) -- returns true/false, get error message using GetLastError if fail.
+Listen(ip, port) or (port) -- returns true/false, get error message using GetLastError if fail.
+Accept() -- returns a socket or false, get error message using GetLastError if fail.
 Close()
 Disconnect() -- Alias of Close
 GetIP() -- Returns the IP as a string
@@ -112,6 +112,8 @@ GetPort() -- Returns the port as a number
 StartSSLClient() -- true/false, starts a TLS v1.2 session, and will use this for all following read and writes
 SetMaxReceiveSize(maxbytes) -- sets the sanity checkers limit, defaults to 10MB max
 IsValid() -- Returns true if the socket is listening or connected
+GetLastError() -- Returns a string describing the last socket error that has happened. Use immediately after one of the supported socket functions fail.
+
 
 SetBlocking(bool)
 -- default this is true. You should not touch this, unless you know what you're doing
@@ -153,7 +155,7 @@ sock:AddWorker()
 //Levels
 SOL_SOCKET = 0xFFFF
 IPPROTO_TCP = 0x6
-	
+
 //Options
 TCP_NODELAY = 0x0001 // enable/disable Nagle's algorithm (this requires IPPROTO_TCP as level)
 SO_DEBUG = 0x0001 // turn on debugging info recording (this, and the rest of the SO_ options require SOL_SOCKET as level)
