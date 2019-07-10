@@ -47,6 +47,8 @@ namespace GMBSOCK {
 		EzSock();
 		~EzSock();
 
+		void StoreSocketError();
+
 		bool create();
 		bool create(int Protocol);
 		bool create(int Protocol, int Type);

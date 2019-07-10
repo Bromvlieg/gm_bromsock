@@ -55,6 +55,23 @@ namespace GMBSOCK {
 		delete times;
 	}
 
+	void EzSock::StoreSocketError() {
+		// Used to store socket function errors (SOCKET_ERROR) into the lastError string.
+#ifdef _MSC_VER
+		int errCode = WSAGetLastError();
+		if(!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, errCode,
+			MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+			lastError, sizeof(lastError), NULL)){
+			// FormatMessage failed, set lastError to just the code instead.
+			snprintf(lastError, sizeof(lastError), "Code: %d", errCode);
+		}
+#else
+		char* errptr = strerror_r(errno, lastError, sizeof(lastError)); // GNU version of strerror_r
+		snprintf(lastError, sizeof(lastError), "%s", errptr);
+#endif
+	}
+
 	bool EzSock::check(){
 		return sock > SOCKET_NONE;
 	}
@@ -90,19 +107,7 @@ namespace GMBSOCK {
 		addr.sin_port = htons(port);
 		lastCode = ::bind(sock,(struct sockaddr*)&addr, sizeof(addr));
 		if (lastCode == SOCKET_ERROR) {
-#ifdef _MSC_VER
-			lastError[0] = '\0';
-			int errCode = WSAGetLastError();
-			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				NULL, errCode,
-				MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-				lastError, sizeof(lastError), NULL);
-			if (!lastError[0]) { // Check for the null byte we set earlier, means FormatMessage failed so we should send the errorcode instead
-				sprintf(lastError, "%d", errCode);
-			}
-#else
-			memcpy(lastError, strerror(errno), sizeof(lastError));
-#endif
+			StoreSocketError();
 			return false;
 		}
 		return true;
@@ -111,19 +116,7 @@ namespace GMBSOCK {
 	bool EzSock::listen(){
 		lastCode = ::listen(sock, MAXCON);
 		if (lastCode == SOCKET_ERROR) {
-#ifdef _MSC_VER
-			lastError[0] = '\0';
-			int errCode = WSAGetLastError();
-			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				NULL, errCode,
-				MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-				lastError, sizeof(lastError), NULL);
-			if (!lastError[0]) { // Check for the null byte we set earlier, means FormatMessage failed so we should send the errorcode instead
-				sprintf(lastError, "%d", errCode);
-			}
-#else
-			memcpy(lastError, strerror(errno), sizeof(lastError));
-#endif
+			StoreSocketError();
 			return false;
 		}
 
@@ -138,8 +131,10 @@ namespace GMBSOCK {
 		socket->sock = ::accept(sock,(struct sockaddr*) &socket->addr, (socklen_t*) &length);
 
 		lastCode = socket->sock;
-		if ( socket->sock == SOCKET_ERROR )
+		if (lastCode == SOCKET_ERROR) {
+			StoreSocketError();
 			return false;
+		}
 
 		socket->state = skCONNECTED;
 		return true;
@@ -176,8 +171,10 @@ namespace GMBSOCK {
 		addr.sin_family = AF_INET;
 		addr.sin_port   = htons(port);
 
-		if(::connect(sock, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
+		if (::connect(sock, (struct sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+			StoreSocketError();
 			return 3;
+		}
 
 		state = skCONNECTED;
 		return 0;
