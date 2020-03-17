@@ -3,22 +3,20 @@ gm_bromsock
 
 A networking module for Garry's Mod created by [Bromvlieg](https://github.com/Bromvlieg)
 
-Facepunch forum thread: http://facepunch.com/showthread.php?t=1393640
+Facepunch forum thread: [http://facepunch.com/showthread.php?t=1393640](https://web.archive.org/web/20160811171158/http://facepunch.com/showthread.php?t=1393640)
 
-##Example code
-*	[HTTP host](Lua_examples/httphost.lua)
-*	[HTTP request](Lua_examples/httprequest.lua)
-*	[IRC](Lua_examples/irc.lua)
-*	[UDP](Lua_examples/udp.lua)
-*	[Host and Connect](Lua_examples/host_and_connect.lua)
+## Example code
+* [HTTP host](Lua_examples/httphost.lua)
+* [HTTP request](Lua_examples/httprequest.lua)
+* [IRC](Lua_examples/irc.lua)
+* [UDP](Lua_examples/udp.lua)
+* [Host and Connect](Lua_examples/host_and_connect.lua)
 
-##License
-This is distributed under the MIT license.
-[(Read More)](LICENSE)
+## License
+This is distributed under the MIT license. [(Read More)](LICENSE)
 
-
-##Notes
-	Windows .dll is compiled with Visual studio 2013 using the 2013 redist (https://www.microsoft.com/en-us/download/details.aspx?id=40784)
+## Notes
+Windows .dll is compiled with Visual studio 2013 using the 2013 redist (https://www.microsoft.com/en-us/download/details.aspx?id=40784)
 
 	Regarding the documentation below, arguments in [tags] are optional and can be ignored.
     If you use callbacks(which you should), then the functions which use callbacks will return nothing
@@ -36,7 +34,7 @@ This is distributed under the MIT license.
 
     WARNING: if you disable blocking, then callbacks WILL generate disconnect events. Callbacks expect blocking, if not, it WILL fuck up
 
-##Packet
+## Packet
 ```lua
 local packet = BromPacket()
 -- Add socket as argument for streaming(bad practice, but sometimes useful)
@@ -86,7 +84,7 @@ Clear() -- empties the inbuffer and outbuffer
 Copy() -- returns a copy of the current packet
 ```
 
-##Socket
+## Socket
 ```lua
 local socket = BromSock([protocol]) -- BROMSOCK_TCP or BROMSOCK_UDP. Defaults to TCP
 
@@ -142,7 +140,7 @@ __tostring
 __gc
 ```
 
-##For advanced networking users
+## For advanced networking users
 ```lua
 sock:SetOption(level, option, value)
 -- returns the number the internal setoption returns (0 often means success, and -1 failure)
