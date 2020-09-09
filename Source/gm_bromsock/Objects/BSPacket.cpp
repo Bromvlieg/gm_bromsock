@@ -324,100 +324,12 @@ namespace GMBSOCK {
 	}
 
 	bool Packet::CanRead(int numofbytes, SSL* ssl){
-		if (numofbytes == 0) return true;
-
-		bool res = this->InSize - this->InPos >= (unsigned int)(numofbytes);
-		if (res == false && this->Sock != nullptr){
-			unsigned char* tmp = new unsigned char[numofbytes];
-			int recamount = 0;
-			while(recamount != numofbytes){
-#ifndef BROMSOCK_NOSSL
-				int currec = ssl == nullptr ? recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0) : SSL_read(ssl, (char*)tmp + recamount, numofbytes - recamount);
-#else
-				int currec = recv(this->Sock->sock, (char*)tmp + recamount, numofbytes - recamount, 0);
-#endif
-				if (currec == -1 || currec == 0){
-					if (recamount > 0){
-						// even trough we didn't receive everything we wanted, we DID receive something. Which means it worked? Right?
-						numofbytes = recamount;
-						break;
-					}
-
-					this->Sock->state = EzSock::skERROR;
-					this->Valid = false;
-					delete[] tmp;
-					return false;
-				}
-
-				recamount += currec;
-			}
-
-			this->CheckSpaceIn(numofbytes);
-			memcpy(this->InBuffer + this->InPos, tmp, numofbytes);
-			delete[] tmp;
-
-			return true;
-		}
-
-		return res;
+		return numofbytes <= this->DataLeft();
 	}
 
 	bool Packet::CanRead(char* seq, SSL* ssl){
-		if (this->Sock == nullptr)
-			return false;
-
-		char* buffer = new char[4096];
-		int curoffset = 0;
 		int seqsize = strlen(seq);
-
-		while (true) {
-#ifndef BROMSOCK_NOSSL
-			int currec = ssl == nullptr ? recv(this->Sock->sock, buffer + curoffset, 1, 0) : SSL_read(ssl, buffer + curoffset, 1);
-#else
-			int currec = recv(this->Sock->sock, buffer + curoffset, 1, 0);
-#endif
-			
-			if (currec == -1 || currec == 0){
-				this->Sock->state = EzSock::skERROR;
-				this->Valid = false;
-				delete[] buffer;
-				return false;
-			}
-
-			curoffset++;
-
-			// going into negative index won't really matter, but it's bad practice, so let's do this instead. better safe than sorry right?
-			if (curoffset >= seqsize){
-				bool done = true;
-
-				for (int i = 0; i < seqsize; i++){
-					if (buffer[curoffset - seqsize + i] != seq[i]){
-						done = false;
-						break;
-					}
-				}
-
-				if (done){
-					this->CheckSpaceIn(curoffset);
-					memcpy(this->InBuffer + this->InPos, buffer, curoffset);
-
-					delete[] buffer;
-					return true;
-				}
-			}
-
-			// enlarge buffer if neded
-			if (curoffset % 4096 == 0){
-				char* newbuffer = new char[curoffset + 4096];
-				memcpy(newbuffer, buffer, curoffset);
-				
-				delete[] buffer;
-				buffer = newbuffer;
-			}
-		}
-
-		delete[] buffer;
-		return false;
+		return seqsize <= this->DataLeft();
 	}
 
 	void Packet::WriteByte(unsigned char num){
