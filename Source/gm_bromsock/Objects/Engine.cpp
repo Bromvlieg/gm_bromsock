@@ -51,6 +51,7 @@ namespace GMBSOCK {
 			ADDFUNC("Receive", SOCK_Receive);
 			ADDFUNC("ReceiveFrom", SOCK_ReceiveFrom);
 			ADDFUNC("ReceiveUntil", SOCK_ReceiveUntil);
+			ADDFUNC("IsValid", SOCK_IsValid);
 			ADDFUNC("GetIP", SOCK_GetIP);
 			ADDFUNC("GetPort", SOCK_GetPort);
 			ADDFUNC("GetState", SOCK_GetState);
