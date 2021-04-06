@@ -14,7 +14,7 @@ local HTTPContentTypes = {
 function HTTPHost(port)
 	servsock = BromSock();
 	
-	if (not sockServ:Listen(port)) then
+	if (not servsock:Listen(port)) then
 		print("[BS:S] Failed to listen!")
 	else
 		print("[BS:S] Server listening...")
