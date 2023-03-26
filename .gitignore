@@ -298,3 +298,6 @@ conanbuildinfo.txt
 conanbuildinfo.cmake
 graph_info.json
 conan_imports_manifest.txt
+
+# visual code
+.vscode
