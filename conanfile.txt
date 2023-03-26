@@ -1,0 +1,19 @@
+[requires]
+fmt/9.1.0
+nlohmann_json/3.11.2
+utfcpp/3.2.1
+magic_enum/0.8.0
+zlib/1.2.12
+glfw/3.3.8
+glew/2.2.0
+freetype/2.10.4
+openssl/3.0.8
+glm/cci.20230113
+
+[generators]
+cmake_find_package
+cmake_paths
+
+[imports]
+bin, *.dll -> ./bin # Copies all dll files from packages bin folder to my local "bin" folder
+lib, *.dylib* -> ./bin # Copies all dylib files from packages lib folder to my local "bin" folder
