@@ -1,5 +1,5 @@
 [requires]
-openssl/3.0.8
+openssl/3.1.0
 glfw/3.3.8
 fmt/9.1.0
 glew/2.2.0
@@ -10,8 +10,8 @@ glm/cci.20230113
 stb/cci.20220909
 
 [generators]
-CMakeDeps
-CMakeToolchain
+cmake_find_package
+cmake_paths
 
 [imports]
 bin, *.dll -> ./bin # Copies all dll files from packages bin folder to my local "bin" folder
