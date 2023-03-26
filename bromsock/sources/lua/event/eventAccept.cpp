@@ -1,7 +1,7 @@
 #pragma once
 
 #include <bromsock/lua/event/eventAccept.h>
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 namespace bromsock {
     namespace event {

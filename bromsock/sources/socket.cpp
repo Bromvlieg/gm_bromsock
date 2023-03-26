@@ -5,7 +5,7 @@
 #include <bromsock/engine.h>
 #include <bromsock/lua/event/eventShutdown.h>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 namespace bromsock {
     Socket::Socket(lua_State* state, int type, bool ipv6) : state(state), type(type), ipv6(ipv6), sock(ipv6), eventsQueue(32), eventsFinished(32) {

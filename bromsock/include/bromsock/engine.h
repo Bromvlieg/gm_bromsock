@@ -1,7 +1,5 @@
 #pragma once
-
-#include <GarrysMod/Lua/interface.h>
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 #include <bromsock/defines.h>
 #include <bromsock/socket.h>
 

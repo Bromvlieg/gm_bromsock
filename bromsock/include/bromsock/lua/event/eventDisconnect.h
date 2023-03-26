@@ -2,7 +2,7 @@
 
 #include <bromsock/lua/event/eventBase.h>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 namespace bromsock {
     namespace event {

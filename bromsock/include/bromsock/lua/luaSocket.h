@@ -3,7 +3,7 @@
 #include <bromsock/socket.h>
 #include <bromsock/defines.h>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 namespace bromsock
 {

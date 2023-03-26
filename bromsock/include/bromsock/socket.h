@@ -5,7 +5,7 @@
 
 #include <bromsock/lua/event/eventBase.h>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 #include <map>
 #include <mutex>

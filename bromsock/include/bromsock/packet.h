@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <string>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 namespace bromsock {
     class Packet{

@@ -1,4 +1,4 @@
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 #include <bromsock/engine.h>
 
 #include <openssl/ssl.h>

@@ -2,7 +2,7 @@
 #include <bromsock/lua/luaSocket.h>
 #include <bromsock/lua/luaPacket.h>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 using namespace GarrysMod;
 using namespace GarrysMod::Lua;

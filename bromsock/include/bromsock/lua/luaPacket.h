@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 #include <bromsock/defines.h>
 
 namespace bromsock

@@ -4,7 +4,7 @@
 #include <bromsock/socket.h>
 #include <bromsock/packet.h>
 
-#include <GarrysMod/Lua/interface.h>
+#include <GarrysMod/Lua/Interface.h>
 
 namespace bromsock {
     namespace event {

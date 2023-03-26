@@ -32,7 +32,7 @@ jobs:
           name: artifacts
           path: bromsock/artifacts
 
-  windows:
+  windows32:
     runs-on: windows-latest
 
     steps:
@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          CXX=g++-10 cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -T host=x86 -A win32
           ninja
 
       - name: Archive production artifacts
