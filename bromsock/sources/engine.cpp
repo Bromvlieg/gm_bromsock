@@ -1,6 +1,7 @@
 #include <bromsock/engine.h>
 #include <bromsock/lua/luaSocket.h>
 #include <bromsock/lua/luaPacket.h>
+#include <bromsock/lua/event/eventDisconnect.h>
 
 #include <GarrysMod/Lua/Interface.h>
 
@@ -97,6 +98,25 @@ namespace bromsock {
 		for (auto sock : ptrCopy) {
 			while(sock->hasEvent()) {
 				auto&& event = sock->getNextEvent();
+
+				// check if the event failed, and socket should be disconnected
+				// eg: read or write fails
+				if (event->getShouldDisconnect()) {
+					sock->sock.close();
+
+					// only if callback exists
+					auto disconnectName = event::EventDisconnect::getNameStatic();
+					if (!sock->hasCallback(disconnectName)) continue;
+
+					auto disconnectCallback = sock->getCallback(disconnectName);
+					LUA->ReferencePush(disconnectCallback);
+					sock->pushToStack(state);
+					CALLLUAFUNC(1);
+					continue;
+				}
+
+				// respond to lua
+				// only if callback exists
 				if (!sock->hasCallback(event->getName())) continue;
 				auto callback = sock->getCallback(event->getName());
 

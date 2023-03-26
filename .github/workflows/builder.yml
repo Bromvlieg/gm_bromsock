@@ -3,7 +3,7 @@ name: CI
 on: push
 
 jobs:
-  ubuntu:
+  ubuntu64:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,19 +29,20 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: artifacts
+          name: ubuntu64
           path: bromsock/artifacts
 
-  windows32:
-    runs-on: windows-2019
+  ubuntu32:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
-      - uses: BSFishy/pip-action@v1
-        with:
-          packages: |
-            conan==1.59.0
-            ninja
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install build-essential gcc-10 libgl1-mesa-glx libgl1-mesa-dev libglew-dev ninja-build sudo python3-pip libx11-dev libx11-xcb-dev libfontenc-dev libice-dev libsm-dev libxau-dev libxaw7-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxdmcp-dev libxext-dev libxfixes-dev libxft-dev libxi-dev libxinerama-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev xtrans-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev xkb-data libxcb-dri3-dev uuid-dev libxcb-util-dev gcc-multilib g++-multilib
+          sudo pip install conan==1.59.0
 
       - name: Install Conan packages
         run: |
@@ -51,39 +52,70 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -T host=x86 -A win32
+          CXX=g++-10 cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_C_FLAGS=-m32
           ninja
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: artifacts
+          name: ubuntu32
           path: bromsock/artifacts
 
-  windows64:
-    runs-on: windows-2019
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: BSFishy/pip-action@v1
-        with:
-          packages: |
-            conan==1.59.0
-            ninja
-
-      - name: Install Conan packages
-        run: |
-          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
-
-      - name: Build
-        run: |
-          mkdir build
-          cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
-          ninja
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifacts
-          path: bromsock/artifacts
+####################################################################################################
+# commented out due windows builder does not seem to work. OpenSSL refuses to compile on github :( #
+####################################################################################################
+#  windows32:
+#    runs-on: windows-2019
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: BSFishy/pip-action@v1
+#        with:
+#          packages: |
+#            conan==1.59.0
+#            ninja
+#
+#      - name: Install Conan packages
+#        run: |
+#          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
+#
+#      - name: Build
+#        run: |
+#          mkdir build
+#          cd build
+#          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -T host=x86 -A win32
+#          ninja
+#
+#      - name: Archive production artifacts
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: windows32
+#          path: bromsock/artifacts
+#
+#  windows64:
+#    runs-on: windows-2019
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: BSFishy/pip-action@v1
+#        with:
+#          packages: |
+#            conan==1.59.0
+#            ninja
+#
+#      - name: Install Conan packages
+#        run: |
+#          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
+#
+#      - name: Build
+#        run: |
+#          mkdir build
+#          cd build
+#          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+#          ninja
+#
+#      - name: Archive production artifacts
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: windows64
+#          path: bromsock/artifacts

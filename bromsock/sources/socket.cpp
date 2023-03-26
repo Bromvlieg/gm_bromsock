@@ -29,6 +29,7 @@ namespace bromsock {
     }
 
     void Socket::setCallback(const std::string& name, int callback) {
+        if (hasCallback(name)) LUA->ReferenceFree(getCallback(name));
         callbacks[name] = callback;
     }
 

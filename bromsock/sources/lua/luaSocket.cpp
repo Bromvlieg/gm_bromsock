@@ -227,9 +227,9 @@ namespace bromsock
             s->sock.create(s->type);
 
             auto event = std::make_unique<event::EventWriteTo>();
-            event->ip = LUA->GetString(3);
-            event->port = static_cast<int>(LUA->GetNumber(4));
-            event->buffer = std::vector(p->OutBuffer, p->OutBuffer + p->OutPos);
+            event->setIp(LUA->GetString(3));
+            event->setPort(static_cast<int>(LUA->GetNumber(4)));
+            event->setBuffer(std::vector(p->OutBuffer, p->OutBuffer + p->OutPos));
 
             s->addEvent(std::move(event));
 
@@ -277,7 +277,7 @@ namespace bromsock
 
             Socket* s = GETSOCK(1);
             auto event = std::make_unique<event::EventRead>();
-            event->amount = LUA->IsType(2, GarrysMod::Lua::Type::Number) ? (int)LUA->GetNumber(2) : 0;
+            event->setAmount(LUA->IsType(2, GarrysMod::Lua::Type::Number) ? static_cast<int>(LUA->GetNumber(2)) : 0);
 
             s->addEvent(std::move(event));
 
@@ -298,24 +298,24 @@ namespace bromsock
             if (LUA->IsType(3, GarrysMod::Lua::Type::String) && LUA->IsType(4, GarrysMod::Lua::Type::Number))
             {
                 auto event = std::make_unique<event::EventReadFrom>();
-                event->amount = static_cast<size_t>(amount);
-                event->ip = LUA->GetString(3);
-                event->port = static_cast<int>(LUA->GetNumber(4));
+                event->setAmount(static_cast<size_t>(amount));
+                event->setIp(LUA->GetString(3));
+                event->setPort(static_cast<int>(LUA->GetNumber(4)));
 
-                if (event->amount > s->maxReceiveSize)
+                if (event->getAmount() > s->maxReceiveSize)
                 {
-                    auto err = fmt::format("error in bromsock_C++ allocating buffer to receive {} bytes from {}", event->amount, s->sock.getIpAddress());
+                    auto err = fmt::format("error in bromsock_C++ allocating buffer to receive {} bytes from {}", event->getAmount(), s->sock.getIpAddress());
                     LUA->ThrowError(err.c_str());
                     return 0;
                 }
                 s->addEvent(std::move(event));
             } else {
                 auto event = std::make_unique<event::EventRead>();
-                event->amount = static_cast<size_t>(amount);
+                event->setAmount(static_cast<size_t>(amount));
 
-                if (event->amount > s->maxReceiveSize)
+                if (event->getAmount() > s->maxReceiveSize)
                 {
-                    auto err = fmt::format("error in bromsock_C++ allocating buffer to receive {} bytes from {}", event->amount, s->sock.getIpAddress());
+                    auto err = fmt::format("error in bromsock_C++ allocating buffer to receive {} bytes from {}", event->getAmount(), s->sock.getIpAddress());
                     LUA->ThrowError(err.c_str());
                     return 0;
                 }
@@ -335,7 +335,7 @@ namespace bromsock
             Socket* s = GETSOCK(1);
 
             auto event = std::make_unique<event::EventRead>();
-            event->sequence = LUA->GetString(2);
+            event->setSequence(LUA->GetString(2));
 
             s->addEvent(std::move(event));
             return 0;

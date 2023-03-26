@@ -80,5 +80,17 @@ namespace bromsock {
 
             response = true;
         }
+
+        void EventRead::setAmount(size_t val) {
+            amount = val;
+        }
+
+        size_t EventRead::getAmount() {
+            return amount;
+        }
+
+        void EventRead::setSequence(const std::string& seq) {
+            sequence = seq;
+        }
     }
 }

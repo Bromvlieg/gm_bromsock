@@ -17,7 +17,7 @@ namespace bromsock {
         }
 
         void EventShutdown::process(Socket* sock) {
-            
+
         }
     }
 }

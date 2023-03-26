@@ -7,9 +7,12 @@
 #include <vector>
 
 namespace bromsock {
+    class Socket;
+
     namespace event {
         class EventAccept : public EventBase {
-            public:
+            Socket* acceptedClient = nullptr;
+        public:
 
             static const std::string& getNameStatic();
 
