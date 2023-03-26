@@ -34,6 +34,14 @@ endif()
 
 set_gmod_suffix_prefix_better(${output_target})
 
-add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${GARRYSMOD_FOLDER}/garrysmod/lua/bin")
-add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_SV}" "${GARRYSMOD_FOLDER}/garrysmod/lua/bin/")
-add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_CL}" "${GARRYSMOD_FOLDER}/garrysmod/lua/bin/")
+if (GARRYSMOD_FOLDER STREQUAL "")
+	message("Skipping deploy to garrysmod folder")
+else()
+	message("Deploying to garrysmod folder: ${GARRYSMOD_FOLDER}/garrysmod/lua/bin")
+	message("bin sv: ${${output_target}_OUTPUT_BIN_SV}")
+	message("bin cl: ${${output_target}_OUTPUT_BIN_CL}")
+
+	add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${GARRYSMOD_FOLDER}/garrysmod/lua/bin")
+	add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_SV}" "${GARRYSMOD_FOLDER}/garrysmod/lua/bin/")
+	add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_CL}" "${GARRYSMOD_FOLDER}/garrysmod/lua/bin/")
+endif()

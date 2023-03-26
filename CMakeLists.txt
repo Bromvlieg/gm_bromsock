@@ -3,7 +3,7 @@
 include(FetchContent)
 project ("BromSock" VERSION 1.0.0)
 
-set(GARRYSMOD_FOLDER "D:/SteamLibrary/steamapps/common/GarrysMod")
+set(GARRYSMOD_FOLDER "" CACHE FILEPATH "optional garrysmod path to deploy to on post-build, eg: 'D:/SteamLibrary/steamapps/common/GarrysMod'")
 
 # flags
 set(build_tests FALSE)
