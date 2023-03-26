@@ -45,3 +45,7 @@ else()
 	add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_SV}" "${GARRYSMOD_FOLDER}/garrysmod/lua/bin/")
 	add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_CL}" "${GARRYSMOD_FOLDER}/garrysmod/lua/bin/")
 endif()
+
+add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/artifacts")
+add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_SV}" "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/")
+add_custom_command(TARGET ${output_target} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy "${${output_target}_OUTPUT_BIN_CL}" "${CMAKE_CURRENT_SOURCE_DIR}/artifacts/")

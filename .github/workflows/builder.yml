@@ -1,0 +1,64 @@
+name: CI
+
+on: push
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install build-essential gcc-10 libgl1-mesa-glx libgl1-mesa-dev libglew-dev ninja-build sudo python3-pip libx11-dev libx11-xcb-dev libfontenc-dev libice-dev libsm-dev libxau-dev libxaw7-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxdmcp-dev libxext-dev libxfixes-dev libxft-dev libxi-dev libxinerama-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev xtrans-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev xkb-data libxcb-dri3-dev uuid-dev libxcb-util-dev
+          sudo pip install conan
+
+      - name: Install Conan packages
+        run: |
+          conan profile detect --force
+          mkdir build
+          conan install . --output-folder=build --build=missing
+
+      - name: Build
+        run: |
+          cd build
+          CXX=g++-10 cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+          ninja
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: bromsock/artifacts
+
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: BSFishy/pip-action@v1
+      - uses: ashutoshvarma/setup-ninja@master
+
+      - name: Install dependencies
+        run: |
+          pip install conan
+
+      - name: Install Conan packages
+        run: |
+          conan profile detect --force
+          mkdir build
+          conan install . --output-folder=build --build=missing
+
+      - name: Build
+        run: |
+          cd build
+          CXX=g++-10 cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+          ninja
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: bromsock/artifacts
