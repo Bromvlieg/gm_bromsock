@@ -1,14 +1,13 @@
 [requires]
-fmt/9.1.0
-nlohmann_json/3.11.2
-utfcpp/3.2.1
-magic_enum/0.8.0
-zlib/1.2.12
-glfw/3.3.8
-glew/2.2.0
-freetype/2.10.4
 openssl/3.0.8
+glfw/3.3.8
+fmt/9.1.0
+glew/2.2.0
+nlohmann_json/3.11.2
+freetype/2.13.0
+utfcpp/3.2.3
 glm/cci.20230113
+stb/cci.20220909
 
 [generators]
 cmake_find_package

@@ -38,12 +38,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: BSFishy/pip-action@v1
       - uses: ashutoshvarma/setup-ninja@master
-
-      - name: Install dependencies
-        run: |
-          pip install conan
+      - uses: BSFishy/pip-action@v1
+        with:
+          packages: conan
 
       - name: Install Conan packages
         run: |
