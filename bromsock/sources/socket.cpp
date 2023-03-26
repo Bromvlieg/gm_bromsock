@@ -1,5 +1,3 @@
-#pragma once
-
 #include <bromsock/socket.h>
 #include <bromsock/defines.h>
 #include <bromsock/engine.h>

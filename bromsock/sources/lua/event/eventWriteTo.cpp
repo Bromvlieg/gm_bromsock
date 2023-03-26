@@ -1,5 +1,3 @@
-#pragma once
-
 #include <bromsock/lua/event/eventWriteTo.h>
 #include <GarrysMod/Lua/Interface.h>
 

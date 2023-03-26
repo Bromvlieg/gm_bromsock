@@ -1,5 +1,3 @@
-#pragma once
-
 #include <bromsock/lua/event/eventAccept.h>
 #include <GarrysMod/Lua/Interface.h>
 
@@ -19,7 +17,7 @@ namespace bromsock {
         }
 
         void EventAccept::process(Socket* sock) {
-            
+
         }
     }
 }

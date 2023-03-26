@@ -1,5 +1,3 @@
-#pragma once
-
 #include <bromsock/lua/event/eventRead.h>
 #include <bromsock/socket.h>
 #include <bromsock/packet.h>
@@ -64,7 +62,7 @@ namespace bromsock {
                 return;
             }
 
-            if (amount == -1) {
+            if (amount == 0) {
                 uint32_t len;
                 if (!read(sock, reinterpret_cast<uint8_t*>(&len), sizeof(len))) {
                     setShouldDisconnect(true);

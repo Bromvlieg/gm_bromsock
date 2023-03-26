@@ -23,7 +23,7 @@ namespace bromsock {
         auto e = std::move(states[state]);
         states.erase(states.find(state));
 
-        return std::move(e);
+        return e;
     }
 
     Engine::Engine(lua_State* state) : state(state) {

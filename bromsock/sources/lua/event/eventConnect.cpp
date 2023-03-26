@@ -1,5 +1,3 @@
-#pragma once
-
 #include <bromsock/lua/event/eventConnect.h>
 #include <bromsock/socket.h>
 

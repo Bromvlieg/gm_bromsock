@@ -1,5 +1,3 @@
-#pragma once
-
 #include <bromsock/lua/event/eventReadFrom.h>
 #include <GarrysMod/Lua/Interface.h>
 

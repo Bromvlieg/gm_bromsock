@@ -242,13 +242,14 @@ namespace bromsock {
 	}
 
 	char* Packet::ReadStringNT(unsigned int* outlen) {
-		int startpos = this->InPos;
+		auto startpos = this->InPos;
 
 		while (this->CanRead(1) && this->InBuffer[this->InPos++] != 0) {
 			// a buttload of nothing
 		}
 
-		if (startpos == this->InPos) return new char[1] {0};
+		static char nullStr[] = {0};
+		if (startpos == this->InPos) return nullStr;
 
 		char* buff = new char[this->InPos - startpos + 1];
 		memcpy(buff, this->InBuffer + startpos, this->InPos - startpos);
