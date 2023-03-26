@@ -17,14 +17,13 @@ jobs:
 
       - name: Install Conan packages
         run: |
-          conan profile detect --force
-          mkdir build
-          conan install . --output-folder=build --build=missing
+          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
 
       - name: Build
         run: |
+          mkdir build
           cd build
-          CXX=g++-10 cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+          CXX=g++-10 cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           ninja
 
       - name: Archive production artifacts
@@ -45,7 +44,7 @@ jobs:
 
       - name: Install Conan packages
         run: |
-          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
+          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
 
       - name: Build
         run: |
