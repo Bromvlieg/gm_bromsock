@@ -37,10 +37,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: ashutoshvarma/setup-ninja@master
       - uses: BSFishy/pip-action@v1
         with:
-          packages: conan==1.59.0
+          packages: |
+            conan==1.59.0
+            ninja
 
       - name: Install Conan packages
         run: |
@@ -51,6 +52,34 @@ jobs:
           mkdir build
           cd build
           cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -T host=x86 -A win32
+          ninja
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: bromsock/artifacts
+
+  windows64:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: BSFishy/pip-action@v1
+        with:
+          packages: |
+            conan==1.59.0
+            ninja
+
+      - name: Install Conan packages
+        run: |
+          conan install . -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True --build=missing
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           ninja
 
       - name: Archive production artifacts

@@ -2,7 +2,6 @@ function(set_gmod_suffix_prefix_better library)
     set(prefixCL "gmcl_")
     set(prefixSV "gmsv_")
     set(suffix "")
-	SET_TARGET_PROPERTIES(${library} PROPERTIES PREFIX ${prefixSV})
 
 	if(APPLE)
 		if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
@@ -24,15 +23,20 @@ function(set_gmod_suffix_prefix_better library)
 		endif()
 	endif()
 
-	SET_TARGET_PROPERTIES(${library} PROPERTIES PREFIX ${prefixSV})
+	if(MSVC_IDE)
+		SET_TARGET_PROPERTIES(${library} PROPERTIES PREFIX ${prefixSV})
+	else()
+		SET_TARGET_PROPERTIES(${library} PROPERTIES PREFIX ${CMAKE_BUILD_TYPE}/${prefixSV})
+	endif()
 	SET_TARGET_PROPERTIES(${library} PROPERTIES SUFFIX ${suffix})
-    set("${library}_OUTPUT_BIN_SV" "${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE_INIT}/${prefixSV}${library}${suffix}" PARENT_SCOPE)
-    set("${library}_OUTPUT_BIN_CL" "${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE_INIT}/${prefixCL}${library}${suffix}" PARENT_SCOPE)
+
+    set("${library}_OUTPUT_BIN_SV" "${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE}/${prefixSV}${library}${suffix}" PARENT_SCOPE)
+    set("${library}_OUTPUT_BIN_CL" "${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE}/${prefixCL}${library}${suffix}" PARENT_SCOPE)
 
 	add_custom_command(
 		TARGET ${output_target} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
-		"${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE_INIT}/${prefixSV}${library}${suffix}"
-		"${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE_INIT}/${prefixCL}${library}${suffix}"
+		"${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE}/${prefixSV}${library}${suffix}"
+		"${BromSock_BINARY_DIR}/${library}/${CMAKE_BUILD_TYPE}/${prefixCL}${library}${suffix}"
 	)
 endfunction()
