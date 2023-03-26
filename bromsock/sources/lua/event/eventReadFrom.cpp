@@ -4,6 +4,17 @@
 
 #include <GarrysMod/Lua/Interface.h>
 
+#ifdef _MSC_VER
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#pragma comment(lib,"wsock32.lib")
+#else
+
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <cstring>
+#endif
+
 namespace bromsock {
     namespace event {
         const std::string& EventReadFrom::getNameStatic() {
