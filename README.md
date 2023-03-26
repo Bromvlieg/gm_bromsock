@@ -16,23 +16,21 @@ Facepunch forum thread: [http://facepunch.com/showthread.php?t=1393640](https://
 This is distributed under the MIT license. [(Read More)](LICENSE)
 
 ## Notes
-Windows .dll is compiled with Visual studio 2013 using the 2013 redist (https://www.microsoft.com/en-us/download/details.aspx?id=40784)
+Windows .dll is compiled with Visual studio 2022 using the 2022 redist [32bit](https://aka.ms/vs/17/release/vc_redist.x86.exe) | [64bit](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
-	Regarding the documentation below, arguments in [tags] are optional and can be ignored.
-    If you use callbacks(which you should), then the functions which use callbacks will return nothing
+    Regarding the documentation below, arguments in [tags] are optional and can be ignored.
 
-	To receive and send data to non bromsock sockets, you'll have to add the true argument to the sock:Send(packet, [dontsendlength])
-	And you'll have to provide a number of bytes to receive in the sock:Receive([count]) (or use sock:ReceiveUntil(string))
+    To receive and send data to non bromsock sockets, you'll have to add the true argument to the sock:Send(packet, [dontsendlength])
+    And you'll have to provide a number of bytes to receive in the sock:Receive([count]) (or use sock:ReceiveUntil(string))
 
-	If you want to receive more than 10MB in one sock:Receive([count]) call, you'll have to use sock:SetMaxReceiveSize(maxbytes) first
-	to prevent the sanity checker throwing errors
+    If you want to receive more than 10MB in one sock:Receive([count]) call, you'll have to use sock:SetMaxReceiveSize(maxbytes) first
+    to prevent the sanity checker throwing errors
 
     Every socket has 2 worker threads. A worker will block(unless you set blocking to false) until the requested action is done.
     This means, that you can call 2 functions at the same time. Example: Send and Receive.
     But if you call Receive twice, and send after that, it'll be stuck on receiving until it got some data, after that the Send gets executed
-    if you want more workers (Which I don't think you need, but screw it) sock:AddWorker()
 
-    WARNING: if you disable blocking, then callbacks WILL generate disconnect events. Callbacks expect blocking, if not, it WILL fuck up
+    WARNING: if you disable blocking, then callbacks WILL generate disconnect events. Callbacks expect blocking.
 
 ## Packet
 ```lua
@@ -61,8 +59,8 @@ ReadStringAll() -- returns string (reads the entire remains of the packet as a s
 ReadLine() -- returns string (reads until \r\n)
 ReadUntil(str) -- returns string (reads until it encounter str, the return value includes str at the end.)
 ReadByte() -- returns number, byte is unsigned, use SByte for signed version
-ReadSByte()
-ReadShort() -- bla bla bla bla look my hands are typing words
+ReadSByte() -- etc
+ReadShort()
 ReadUShort()
 ReadFloat()
 ReadInt()
@@ -99,10 +97,8 @@ SetCallbackAccept(func) -- sock, clientsock (failed: clientsock == nil)
 SetTimeout(miliseconds) -- returns true on success
 -- Warning: you need to do this BEFORE you call receive or send, and AFTER you call Connect, Bind, or Listen.
 
-Connect(ip, port) -- returns true/false, get error message using GetLastError if fail.
 Bind(ip, port) or (port) -- returns true/false, get error message using GetLastError if fail.
 Listen(ip, port) or (port) -- returns true/false, get error message using GetLastError if fail.
-Accept() -- returns a socket or false, get error message using GetLastError if fail.
 Close()
 Disconnect() -- Alias of Close
 GetIP() -- Returns the IP as a string
@@ -119,20 +115,26 @@ SetBlocking(bool)
 Create()
 -- this creates the socket object prematurely. This is required if you want to use SetOption BEFORE you use listen/bind/connect.
 
+Accept()
+-- [callback] do bind & listen before calling Accept for incomming connections
+
+Connect(ip, port)
+-- [callback] get error message using GetLastError if fail.
+
 ReceiveFrom([bytecount], [ip], [port])
--- if no bytecount is given (or nil), it'll receive one diagram. If ip and port also supplied it'll try to receive from that addr.
+-- [callback] if no bytecount is given (or nil), it'll receive one diagram. If ip and port also supplied it'll try to receive from that addr.
 
 Receive([bytecount])
--- returns packet or false. if no bytecount is given, it will internally call receive(4), read an int from that, and then receive the result of that int.
+-- [callback] if no bytecount is given, it will internally call receive(4), read an int from that, and then receive the result of that int.
 
 ReceiveUntil(str)
--- Reads until that string is encountered. ex: "\r\n". the search string will be included in the result you get back at the receive callback
+-- [callback] Reads until that string is encountered. ex: "\r\n". the search string will be included in the result you get back at the receive callback
 
 SendTo(packet, ip, port)
--- Send packet to ip:port. Returns nothing, this uses the callback/threading system. Setting a callback is not required for this one.
+-- [callback] Send packet to ip:port
 
 Send(packet, [dontsendlength])
--- if dontsendlength is true, it WILL NOT add an int in front of the packet to indicate how large the incoming data is. use true if you want to communicate with anything that does not use this way of packeting
+-- [callback] if dontsendlength is true, it WILL NOT add an int in front of the packet to indicate how large the incoming data is. use true if you want to communicate with anything that does not use this way of packeting
 
 -- Implemented and functional meta methods:
 __eq
@@ -147,6 +149,7 @@ sock:SetOption(level, option, value)
 
 sock:AddWorker()
 -- Adds another worker thread
+-- [deprecated]
 ```
 
 ```c
