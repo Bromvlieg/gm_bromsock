@@ -619,6 +619,7 @@ namespace bromsock
                 ADDFUNC("ReceiveFrom", SOCK_ReceiveFrom);
                 ADDFUNC("ReceiveUntil", SOCK_ReceiveUntil);
                 ADDFUNC("GetIP", SOCK_GetIP);
+                ADDFUNC("IsValid", SOCK_IsValid);
                 ADDFUNC("GetPort", SOCK_GetPort);
                 ADDFUNC("GetState", SOCK_GetState);
                 ADDFUNC("GetLastError", SOCK_GetLastError);
