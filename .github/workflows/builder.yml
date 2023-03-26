@@ -33,7 +33,7 @@ jobs:
           path: bromsock/artifacts
 
   windows32:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -61,7 +61,7 @@ jobs:
           path: bromsock/artifacts
 
   windows64:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
