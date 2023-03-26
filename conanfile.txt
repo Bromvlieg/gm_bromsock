@@ -10,8 +10,8 @@ glm/cci.20230113
 stb/cci.20220909
 
 [generators]
-cmake_find_package
-cmake_paths
+CMakeDeps
+CMakeToolchain
 
 [imports]
 bin, *.dll -> ./bin # Copies all dll files from packages bin folder to my local "bin" folder
