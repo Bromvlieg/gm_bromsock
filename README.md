@@ -86,7 +86,7 @@ Copy() -- returns a copy of the current packet
 
 ## Socket
 ```lua
-local socket = BromSock([protocol]) -- BROMSOCK_TCP or BROMSOCK_UDP. Defaults to TCP
+local socket = BromSock([protocol], [ipv6: boolean]) -- BROMSOCK_TCP or BROMSOCK_UDP. Defaults to TCP with IPv4.
 
 SetCallbackReceive(func) -- args in func: sock, packet. (failed: packet == nil)
 SetCallbackReceiveFrom(func) -- hostsock, packet, ip, port < THIS IS FOR UDP (failed: packet == nil)
